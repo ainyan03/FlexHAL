@@ -1,6 +1,7 @@
 #include "PrintfLogger.hpp"
 #include <cstdio>  // For vprintf, fflush, printf, snprintf, vsnprintf
 #include <cstdarg> // For va_list
+#include <iostream> // For std::cerr (used as fallback or for errors)
 
 namespace flexhal {
 namespace platform {
@@ -21,10 +22,7 @@ const char* getLogLevelPrefix(flexhal::utils::logger::LogLevel level) {
     }
 }
 
-PrintfLogger::PrintfLogger() {
-    // Constructor implementation (if needed in the future)
-    // Currently, nothing specific is required for initialization.
-}
+PrintfLogger::PrintfLogger() {}
 
 void PrintfLogger::log(flexhal::utils::logger::LogLevel level, const char* tag, const char* format, std::va_list args) {
     // Note: Global level filtering should happen before calling this log function

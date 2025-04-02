@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cstdarg> // for va_list
-#include "flexhal/utils/logger/ILogger.hpp" // Include the ILogger interface
+#include <cstdarg> // For va_list
+#include "flexhal/utils/logger/ILogger.hpp"
 
 namespace flexhal {
 namespace platform {
@@ -9,45 +9,37 @@ namespace native {
 namespace logger {
 
 /**
- * @brief Logger implementation for native platforms using printf.
+ * @brief Logger implementation that uses standard printf.
  *
- * Outputs log messages to standard output.
+ * This logger directs output to the standard output stream (usually the console)
+ * using printf-style formatting.
  */
 class PrintfLogger final : public flexhal::utils::logger::ILogger {
 public:
     /**
      * @brief Default constructor.
      */
-    PrintfLogger() = default;
+    PrintfLogger();
 
     /**
-     * @brief Virtual destructor.
+     * @brief Default virtual destructor (overrides base class).
      */
-    virtual ~PrintfLogger() noexcept override = default;
+    virtual ~PrintfLogger() override = default; // Keep it simple, noexcept should be inherited
 
     /**
-     * @brief Logs a message using printf.
+     * @brief Logs a message with the specified level, tag, format, and arguments.
      *
-     * @param level The log level.
-     * @param tag The log tag.
-     * @param format The format string.
-     * @param args The variable arguments.
+     * @param level The log level (e.g., INFO, WARN, ERROR).
+     * @param tag A tag string (often the module name).
+     * @param format The printf-style format string.
+     * @param args The variable arguments list matching the format string.
      */
     void log(flexhal::utils::logger::LogLevel level, const char* tag, const char* format, std::va_list args) override;
 
-    // PrintfLogger specific methods (if any) can go here
-    // For example, maybe setting a global level for this specific logger?
-    // void setLevel(flexhal::utils::logger::LogLevel level) { /* ... */ }
-    // flexhal::utils::logger::LogLevel getLevel() const { /* ... */ }
-
-    // Delete copy constructor and assignment operator
+private:
+    // Prevent copying and assignment
     PrintfLogger(const PrintfLogger&) = delete;
     PrintfLogger& operator=(const PrintfLogger&) = delete;
-
-private:
-    // Member variables specific to PrintfLogger (if any)
-    // For example, its own log level threshold
-    // flexhal::utils::logger::LogLevel _level = flexhal::utils::logger::LogLevel::INFO;
 };
 
 } // namespace logger
