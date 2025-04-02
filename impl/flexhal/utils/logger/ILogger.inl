@@ -2,8 +2,8 @@
 
 // Provides definitions for global logger variables and functions declared in ILogger.hpp
 
-#include "flexhal/utils/logger/ILogger.hpp" // Include the header with declarations
-#include "flexhal/utils/logger/LogProxy.hpp" // Include LogProxy definition for the Log instance
+#include "../../../src/flexhal/utils/logger/ILogger.hpp" // Include the header with declarations
+#include "../../../src/flexhal/utils/logger/LogProxy.hpp" // Include LogProxy definition for the Log instance
 
 namespace flexhal {
 namespace utils {
