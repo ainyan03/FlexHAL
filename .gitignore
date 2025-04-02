@@ -1,0 +1,20 @@
+# PlatformIOのビルド生成物
+.pio/
+.vscode/
+*.o
+*.a
+*.elf
+*.bin
+*.hex
+*.map
+
+# MacOS関連
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# エディタの一時ファイル
+*~
+*.swp
+*.swo
+.*.sw*

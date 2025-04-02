@@ -1,0 +1,20 @@
+{
+  "name": "FlexHAL",
+  "version": "0.1.0",
+  "description": "クロスプラットフォーム組み込みハードウェア抽象化ライブラリ",
+  "keywords": "hal, hardware, abstraction, esp32, arduino",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lovyan03/FlexHAL.git"
+  },
+  "authors": [
+    {
+      "name": "lovyan03",
+      "url": "https://github.com/lovyan03"
+    }
+  ],
+  "license": "MIT",
+  "frameworks": ["arduino", "espidf"],
+  "platforms": ["espressif32"],
+  "headers": ["FlexHAL.h"]
+}

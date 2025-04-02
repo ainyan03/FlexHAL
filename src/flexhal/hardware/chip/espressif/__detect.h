@@ -1,0 +1,16 @@
+#pragma once
+
+#include "../__detect.h"
+
+// Espressif階層の検出マクロ
+#ifndef FLEXHAL_DETECT_HARDWARE_CHIP_ESPRESSIF_ESP32
+ #if FLEXHAL_DETECT_HARDWARE_CHIP_ESPRESSIF
+  #if defined(ESP32)
+   #define FLEXHAL_DETECT_HARDWARE_CHIP_ESPRESSIF_ESP32 1
+  #else
+   #define FLEXHAL_DETECT_HARDWARE_CHIP_ESPRESSIF_ESP32 0
+  #endif
+ #else
+  #define FLEXHAL_DETECT_HARDWARE_CHIP_ESPRESSIF_ESP32 0
+ #endif
+#endif
