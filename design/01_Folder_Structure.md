@@ -1,10 +1,13 @@
 ## フォルダ構造とファイルの配置ルール
 - ArduinoIDEおよびPlatformIOからライブラリとして認識できる構成にする。
+- ESP-IDFの components として利用できるよう CMakeLists.txt を配置する。
 - 基本的に全てのAPIはC++用として提供するが、将来的にC言語用のラッパーを提供する可能性がある。
-- ビルドの検証は /FlexHAL/platformio.ini に設定を配置して PlatformIO で行う。
-  - platformio.ini には、esp32, native の環境用の定義を含む。
-  - platformio.ini には、examples の各サンプルフォルダをビルドするためのフォルダ設定定義を含む。
-  - 上記の各設定定義を掛け合わせたものを env として用意することで、複数の環境とサンプルのビルドを可能にする。
+- ビルドの検証はPlatformIOを使用する。 /FlexHAL/platformio.ini に設定を配置。
+
+### platformio.ini の設定ルール
+- platformio.ini には、esp32, native, など環境用の定義を含む。
+- platformio.ini には、examples の各サンプルフォルダをビルドするためのフォルダ設定の定義を含む。
+- 上記の各設定定義を掛け合わせたものを env として用意することで、複数の環境とサンプルのビルドを可能にする。
 
 ### フォルダ構成の概要
 ```
@@ -22,16 +25,28 @@ FlexHAL/
 │   ├── FlexHAL.hpp   // ライブラリ公開用 API (実装を含む場合がある)
 │   ├── FlexHAL.cpp   // 実装を有効化し、ヘッダをインクルードする唯一のソースファイル
 │   └── flexhal/      // 公開APIヘッダ群 (実装を含む場合がある)
-│       ├── platform/ // 環境依存コード群
-│       └── utils/    // 共通ユーティリティ
+│       ├── internal/     # Internal, environment-specific implementations (Do not use directly)
+│       │   ├── platform/ # Platform-specific (e.g., ESP32 series, native OS) implementations
+│       │   │   └── ...   # Platform vendor/board specific folders (e.g., espressif/esp32s3)
+│       │   ├── framework/# Framework-specific (e.g., Arduino, ESP-IDF, SDL) implementations
+│       │   │   └── ...   # Framework specific folders (e.g., arduino, esp-idf)
+│       │   └── arch/     # CPU Architecture-specific (e.g., Xtensa, ARM) implementations
+│       │       └── ...   # Architecture specific folders (e.g., xtensa, armv7e-m)
+│       ├── utils/        # Common utility code (Logging, etc.), always included
+│       │   └── ...
+│       ├── fallback/     # Fallback implementations (e.g., basic printf logger), always included
+│       │   └── ...
+│       └── __include.h   # Top-level internal include file
 ```
-### srcフォルダの配置ルール
-- ユーザーが使用するヘッダファイルは、 `FlexHAL.hpp` とするが、 `FlexHAL.h` も用意する。
-- WindowsでArduinoIDE使用時のビルド時間を短縮するため、 `/FlexHAL/src/` フォルダ内に配置できるソースファイルは `FlexHAL.cpp` のみとする。これ以外の拡張子 `.c` `.cpp` のファイルは配置しない。
+### /FlexHAL/src/ フォルダの配置ルール
+- このフォルダはArduinoライブラリとして、ビルド対象やインクルードパスとなるフォルダ。
+- ユーザーが直接使用するヘッダファイルとして、 `FlexHAL.hpp` と `FlexHAL.h` が配置される。
+- ソースファイルは `/FlexHAL/src/FlexHAL.cpp` のみを唯一のビルド対象ソースファイルとする。これ以外の拡張子 `.c` `.cpp` のファイルはどこにも配置しない。
+- 上記の理由は、ビルド対象のファイルが増えると WindowsでArduinoIDE使用時のビルド時間が長くなるので、これを短縮するため、
+- 上記の`FlexHAL.cpp` の内容は、まず `#define FLEXHAL_INTERNAL_IMPLEMENTATION` を記述し、その後に `#include "FlexHAL.hpp"` を記述する。これにより、ライブラリ全体のヘッダ内実装がこのファイルでコンパイルされる。
 - C++の実装は、原則として対応する `.hpp` ヘッダファイル内に記述する。
 - ヘッダファイル内の実装コードは `#ifdef FLEXHAL_INTERNAL_IMPLEMENTATION` / `#endif` マクロで囲み、ヘッダをインクルードするだけでは実装がコンパイルされないようにする。
 - ビルド環境においては、`/FlexHAL/src/FlexHAL.cpp` のみをビルド対象とする。
-- `FlexHAL.cpp` の内容は、まず `#define FLEXHAL_INTERNAL_IMPLEMENTATION` を記述し、その後に `#include "FlexHAL.hpp"` を記述する。これにより、ライブラリ全体のヘッダ内実装がこのファイルでコンパイルされる。
 - インクルードガードは原則 `#pragma once` とするが、 `/FlexHAL/src/FlexHAL.h` および `/FlexHAL/src/FlexHAL.hpp` のみ `ifndef` + `define`マクロ方式とする。これはユーザーコード側で、`ifndef`マクロによって対象ファイルがincludeされているかどうかを判断可能にするため。
 
 ### コーディング規約 (一部)
@@ -42,10 +57,44 @@ FlexHAL/
 - これにより、ユーザーがビルドオプションなどで定義する可能性のあるマクロとの名前衝突を避ける。
 
 #### 階層構造を実現するための仕組み
-- 環境依存コードが集約される `/src/flexhal/platform/` フォルダ内の各フォルダ階層には、ビルド環境の自動検出と必要なヘッダのインクルード制御のため、原則として `__detect.h` と `__include.h` を配置する。
-- `__detect.h` 内には、所属するフォルダ階層がビルド環境に必要かどうかを検出するマクロを含める。
-- `__include.h` 内には、検出結果に基づき、同階層に含まれる公開APIヘッダおよびサブフォルダの `__include.h` のインクルードを含める。
-- 環境に依存しない共通機能のフォルダ (`/src/flexhal/utils/` など) には、これらのファイルは基本的に配置しない。
+- 環境依存コードが集約される `/src/flexhal/internal/` フォルダ内
+  - `/src/flexhal/internal/platform/` : 特定の実行環境プラットフォーム（例: `espressif/esp32`, `native`）の実装。PlatformIO の `platform` の概念に近い階層です。
+  - `/src/flexhal/internal/framework/` : 特定のソフトウェアフレームワーク（例: `arduino`, `esp-idf`, `sdl`）の実装。
+  - `/src/flexhal/internal/arch/` : 特定のCPUアーキテクチャ（例: `xtensa`, `arm`）の実装。
+- 環境依存コードの検出・インクルードには、各階層に配置する `__detect.h` および `__include.h` ファイルを使用する (詳細は [03_Detection_Inclusion.md](./03_Detection_Inclusion.md) を参照)
+- `/src/flexhal/utils/` フォルダ内
+  - ライブラリ全体で共通して使用されるユーティリティ機能を配置する。
+  - 例: Loggerインターフェース (`ILogger.hpp`)
+- `/src/flexhal/fallback/` フォルダ内
+  - 特定のプラットフォームに依存しない、基本的な機能を提供するフォールバック実装を配置する。
+  - これらの実装は、対応するプラットフォーム固有の実装が存在しない場合や、明示的に選択された場合に使用される。
+  - 例: `printf` を使用した基本的なロガー実装 (`PrintfLogger.hpp`)
 
 #### __detect.h , __include.h のルール
 - 詳細は [03_Detection_Inclusion.md](./03_Detection_Inclusion.md) を参照
+
+### `src/flexhal/internal/`
+
+*   **役割**: 特定の環境（プラットフォーム、フレームワーク、CPUアーキテクチャ）に依存する実装を格納します。
+*   **原則**:
+    *   このディレクトリ内のコードは、通常ユーザーが直接利用することは**推奨されません**。FlexHALの共通インターフェースを通じて利用されることを想定しています。
+    *   `__detect.h` ファイルを各サブディレクトリ（`platform`, `framework`, `arch`）やその更に下の階層に配置し、利用可能な機能や環境を定義します。
+    *   `__include.h` ファイルを配置し、検出された機能に対応するヘッダーファイルをインクルードします。
+*   **サブディレクトリ**:
+    *   `platform/`: 特定の実行環境プラットフォーム（例: `espressif/esp32`, `native`）の実装。PlatformIO の `platform` の概念に近い階層です。
+    *   `framework/`: 特定のソフトウェアフレームワーク（例: `arduino`, `esp-idf`, `sdl`）の実装。
+    *   `arch/`: 特定のCPUアーキテクチャ（例: `xtensa`, `arm`）の実装。
+
+### `src/flexhal/utils/`
+
+*   **役割**: 環境に依存しない共通のユーティリティコード（ロガープロキシなど）を格納します。
+*   **原則**:
+    *   このディレクトリ内の機能は常に利用可能です。
+    *   `internal` や `fallback` から利用されることがあります。
+
+### `src/flexhal/fallback/`
+
+*   **役割**: 特定のプラットフォーム実装が存在しない場合や、基本的な機能を提供するためのフォールバック実装を格納します。
+*   **原則**:
+    *   このディレクトリ内の機能は常に利用可能です。
+    *   `printf` ベースのロガーなどが含まれます。
