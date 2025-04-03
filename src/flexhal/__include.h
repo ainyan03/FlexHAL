@@ -2,7 +2,17 @@
 
 // ルートレベルのインクルードファイル
 
-// Common utilities (always included)
-#include "utils/__include.h"
+// Include platform-specific implementations (hardware, framework, etc.)
+#if __has_include("internal/__include.h")
+ #include "internal/__include.h"
+#endif
 
-#include "platform/__include.h"
+// Include common utilities
+#if __has_include("utils/__include.h")
+ #include "utils/__include.h"
+#endif
+
+// Include fallback implementations (always available)
+#if __has_include("fallback/__include.h")
+ #include "fallback/__include.h"
+#endif
