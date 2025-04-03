@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cstdint>  // for int16_t
-#include <limits>   // for numeric_limits
+#include <stdint.h>    // for int16_t
+#include <limits>     // numeric_limits は C++ 固有機能なので残す
 
 #include "cpp/compat.hpp"
 
