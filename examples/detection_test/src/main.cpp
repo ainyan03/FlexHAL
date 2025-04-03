@@ -1,108 +1,69 @@
+#include <FlexHAL.h> // Include the main FlexHAL header
+
+// Define a logging tag for this file
+static const char* LOG_TAG = "SimpleExample";
+
 #ifdef ARDUINO
-#include <Arduino.h>
+  #include <Arduino.h>
+  // Simple logger implementation for Arduino using Serial
+  class SimpleSerialLogger : public flexhal::utils::logger::ILogger {
+  public:
+      void log(flexhal::utils::logger::LogLevel level, const char* tag, const char* format, std::va_list args) override {
+          if (Serial) { // Check if Serial is available
+              char levelChar = '?';
+              switch (level) {
+                  case flexhal::utils::logger::LogLevel::ERROR:   levelChar = 'E'; break;
+                  case flexhal::utils::logger::LogLevel::WARN:    levelChar = 'W'; break;
+                  case flexhal::utils::logger::LogLevel::INFO:    levelChar = 'I'; break;
+                  case flexhal::utils::logger::LogLevel::DEBUG:   levelChar = 'D'; break;
+                  case flexhal::utils::logger::LogLevel::VERBOSE: levelChar = 'V'; break;
+                  default: break;
+              }
+              char buffer[256]; // Static buffer for log message
+              vsnprintf(buffer, sizeof(buffer), format, args);
+              Serial.printf("[%c] [%s] %s\n", levelChar, tag, buffer);
+          }
+      }
+  };
+  static SimpleSerialLogger platform_logger; // Create an instance
+
 #else // --- Native Environment ---
-#include <stdio.h> // For printf (might still be needed if logger fails?)
-#include <unistd.h> // For sleep
-#include <cstdio> // For printf in this example
-#include <cstdlib> // For EXIT_SUCCESS
-
-// Include LogProxy first, as it defines the class and includes ILogger.hpp (which declares Log)
-#include "flexhal/utils/logger/LogProxy.hpp"     // Include LogProxy (Log instance and definition)
-// #include "flexhal/utils/logger/ILogger.hpp"      // No longer needed directly, included by LogProxy.hpp
-#include "flexhal/platform/native/logger/PrintfLogger.hpp" // Include the native logger implementation
-
-// Define a tag for our logs
-#define LOG_TAG "DetectionTest"
-
-// Create a static logger instance for the native environment
-static flexhal::platform::native::logger::PrintfLogger native_logger;
-
-#endif // ARDUINO
-
-#include <FlexHAL.h> // Include FlexHAL core *after* potential platform specifics
-
-// Detect Arduino environment (PlatformIO usually defines this)
-#if defined(ARDUINO) && ARDUINO >= 100
-  #include "Arduino.h"
-  #define FLEXHAL_DETECT_FRAMEWORK_ARDUINO
-#else
-  #define FLEXHAL_DETECT_PLATFORM_NATIVE // Assume native if not Arduino
-  // Note: Framework and RTOS detection would be more complex in reality
-  #define FLEXHAL_DETECT_FRAMEWORK_NONE
-  #define FLEXHAL_DETECT_RTOS_NONE
+  #include <cstdio> // For vsnprintf used by PrintfLogger potentially
+  #include <cstdlib> // For exit() if needed later
+  #include "flexhal/platform/native/logger/PrintfLogger.hpp" // Include the native logger
+  static flexhal::platform::native::logger::PrintfLogger platform_logger; // Create an instance
 #endif
+
 
 void setup() {
-#ifndef ARDUINO // In Arduino, Serial setup is often done, but we initialize logging here
-  std::printf("---- FlexHAL Detection Test (Native) ----\n");
-  // Set the global logger and level
-  flexhal::utils::logger::setLogger(&native_logger);
-  flexhal::utils::logger::setLogLevel(flexhal::utils::logger::LogLevel::VERBOSE); // Set desired log level
-  flexhal::utils::logger::Log.info(LOG_TAG, "Logger initialized. Starting setup...");
-#else
-  Serial.begin(115200);
-  while (!Serial); // Wait for serial port to connect (needed for some boards)
-  Serial.println("---- FlexHAL Detection Test (Arduino) ----");
-  flexhal::utils::Log.debug("FlexHAL", "Serial Initialized."); // Example log
-#endif
+  #ifdef ARDUINO
+    // Initialize Serial communication for Arduino
+    Serial.begin(115200);
+    // while (!Serial); // Optional: wait for serial connection
+  #endif
 
-  flexhal::utils::logger::Log.info(LOG_TAG, "Performing environment detection checks...");
+  // Set the platform-specific logger instance
+  flexhal::utils::logger::setLogger(&platform_logger);
 
-  // Example Usage of Detection Macros
-#ifdef FLEXHAL_DETECT_PLATFORM_NATIVE
-  flexhal::utils::logger::Log.info(LOG_TAG, "Platform: Native detected.");
-#elif defined(FLEXHAL_DETECT_PLATFORM_ESP32)
-  flexhal::utils::logger::Log.info(LOG_TAG, "Platform: ESP32 detected.");
-#elif defined(FLEXHAL_DETECT_PLATFORM_RP2040)
-  flexhal::utils::logger::Log.info(LOG_TAG, "Platform: RP2040 detected.");
-#else
-  flexhal::utils::logger::Log.warn(LOG_TAG, "Platform: Unknown or not detected!");
-#endif
+  // Set the desired global log level
+  flexhal::utils::logger::setLogLevel(flexhal::utils::logger::LogLevel::VERBOSE);
 
-#ifdef FLEXHAL_DETECT_FRAMEWORK_ARDUINO
-  flexhal::utils::logger::Log.info(LOG_TAG, "Framework: Arduino detected.");
-#elif defined(FLEXHAL_DETECT_FRAMEWORK_ESP_IDF)
-  flexhal::utils::logger::Log.info(LOG_TAG, "Framework: ESP-IDF detected.");
-#elif defined(FLEXHAL_DETECT_FRAMEWORK_NONE)
-  flexhal::utils::logger::Log.info(LOG_TAG, "Framework: None or Generic detected.");
-#else
-  flexhal::utils::logger::Log.warn(LOG_TAG, "Framework: Unknown or not detected!");
-#endif
-
-#ifdef FLEXHAL_DETECT_RTOS_FREERTOS
-  flexhal::utils::logger::Log.info(LOG_TAG, "RTOS: FreeRTOS detected.");
-#elif defined(FLEXHAL_DETECT_RTOS_ZEPHYR)
-  flexhal::utils::logger::Log.info(LOG_TAG, "RTOS: Zephyr detected.");
-#else
-  flexhal::utils::logger::Log.info(LOG_TAG, "RTOS: None or Generic detected.");
-#endif
-
-  flexhal::utils::logger::Log.info(LOG_TAG, "Detection checks complete.");
-  flexhal::utils::logger::Log.debug(LOG_TAG, "Setup finished."); // Example debug message
-  std::printf("----------------------------------------\n");
+  // Log a setup completion message using FlexHAL logger
+  flexhal::utils::logger::Log.info(LOG_TAG, "FlexHAL setup complete.");
 }
 
 void loop() {
-#ifndef ARDUINO
-    flexhal::utils::logger::Log.verbose(LOG_TAG, "Loop iteration started."); // Example verbose message
-    flexhal::utils::logger::Log.error(LOG_TAG, "Simulating an error condition!"); // Example error message
-    std::printf("Native loop: Sleeping for 1 second...\n");
-    sleep(1); // Sleep for 1 second (Unix-like systems)
-    flexhal::utils::logger::Log.info(LOG_TAG, "Loop iteration finished.");
-#else
-    Serial.println("Arduino loop: Delaying for 1 second...");
-    delay(1000);
-#endif
+  // Log a simple message using FlexHAL logger
+  flexhal::utils::logger::Log.info(LOG_TAG, "Hello from FlexHAL loop!");
+
+  // No delay/sleep needed for this simple example
 }
 
-#ifndef ARDUINO // Non-Arduino platforms need a main function
+#ifndef ARDUINO // Provide main() for native execution
 int main() {
-  setup();
-  // Loop 10 times then exit
-  for (int i = 0; i < 10; ++i) {
+    setup();
+    // Call loop once for simplicity in this native example
     loop();
-  }
-  flexhal::utils::logger::Log.info(LOG_TAG, "Native program finished."); // Log the finish
-  return 0;
+    return 0; // Exit cleanly
 }
 #endif

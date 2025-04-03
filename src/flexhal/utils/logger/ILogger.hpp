@@ -1,30 +1,36 @@
 #pragma once
 
-#include <cstdarg> // for va_list
+#include <cstdarg> // For std::va_list
 
-// Forward declare LogProxy to allow declaring the extern Log instance.
-namespace flexhal { namespace utils { namespace logger { class LogProxy; } } }
+// Forward declare LogProxy - needed even if globals are moved, 
+// because LogProxy might use LogLevel or ILogger concepts internally.
+// Although, if LogProxy ONLY needs LogLevel/ILogger, including this header is enough.
+// Let's keep it clean for now.
+// namespace flexhal { namespace utils { namespace logger { class LogProxy; } } } // No longer needed here
 
 namespace flexhal {
 namespace utils {
 namespace logger {
 
+// --- Log Level Enum ---
 /**
  * @brief Defines the logging levels.
  */
 enum class LogLevel {
-    NONE,    ///< No logging output
-    ERROR,   ///< Only errors
-    WARN,    ///< Errors and warnings
-    INFO,    ///< Errors, warnings, and info
-    DEBUG,   ///< Errors, warnings, info, and debug
-    VERBOSE  ///< All log levels
+    NONE = 0, ///< No logging
+    ERROR,    ///< Critical errors
+    WARN,     ///< Warnings
+    INFO,     ///< Informational messages
+    DEBUG,    ///< Debug messages
+    VERBOSE   ///< Verbose debug messages
 };
 
+// --- Logger Interface ---
 /**
  * @brief Interface for logger implementations.
  *
- * Defines the common operations for logging messages.
+ * Concrete logger implementations (e.g., SerialLogger, PrintfLogger)
+ * should inherit from this class and implement the log method.
  */
 class ILogger {
 public:
@@ -45,44 +51,13 @@ public:
 
     // Note: Level management (setLevel/getLevel) is intentionally omitted here.
     // It's assumed to be handled either by the specific implementation
-    // or by a global mechanism if needed.
+    // or by a global mechanism (now in logger_globals.hpp).
 };
 
-// --- Global Logger Management Declarations ---
+// --- Global definitions and declarations moved to logger_globals.hpp ---
 
-// Pointer to the currently active logger instance (defined in .inl)
-extern ILogger* _active_logger;
-
-// Default log level (defined in .inl)
-extern LogLevel _default_log_level;
-
-/**
- * @brief Sets the global logger instance.
- * @param logger Pointer to the ILogger implementation to use.
- */
-void setLogger(ILogger* logger); // Definition in .inl
-
-/**
- * @brief Sets the global minimum log level.
- * @param level The minimum log level.
- */
-void setLogLevel(LogLevel level); // Definition in .inl
-
-/**
- * @brief Gets the current global minimum log level.
- * @return The current log level.
- */
-LogLevel getLogLevel(); // Definition in .inl
-
-// --- Global Log Proxy Instance Declaration ---
-
-// Global instance of the log proxy (defined in .inl)
-// Use this like: flexhal::utils::logger::Log.info("TAG", "Message %d", value);
-extern LogProxy Log;
-
-// Include the LogProxy class definition *after* declaring the extern Log instance
-#include "LogProxy.hpp"
-
+// Include LogProxy definition here? No, LogProxy should include ILogger.hpp if needed.
+// #include "LogProxy.hpp"
 
 } // namespace logger
 } // namespace utils
