@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstdint>  // for int16_t
+#include <limits>   // for numeric_limits
+
 #include "cpp/compat.hpp"
 
 namespace flexhal::base {
