@@ -14,40 +14,48 @@
 FlexHAL/
 ├── library.properties
 ├── library.json
-├── platformio.ini         // PlatformIOの設定ファイル (ビルドやテスト用の設定)
-├── examples/              // Arduinoライブラリとしてのサンプルフォルダ
-│   └── build_test/        // ビルドテスト用サンプル
-│       ├── build_test.ino // ビルドテスト用サンプルのArduinoスケッチ(中身は空)
-│       └── src/           // ビルドテスト用サンプルの中身
-│           └── main.cpp   // ビルド対象ファイル
+├── platformio.ini         # PlatformIOの設定ファイル (ビルドやテスト用の設定)
+├── examples/              # Arduinoライブラリとしてのサンプルフォルダ
+│   └── build_test/        # ビルドテスト用サンプル
+│       ├── build_test.ino # ビルドテスト用サンプルのArduinoスケッチ(中身は空)
+│       └── src/           # ビルドテスト用サンプルの中身
+│           └── main.cpp   # ビルド対象ファイル
 ├── src/
-│   ├── FlexHAL.h     // エイリアス役。内容は #include "FlexHAL.hpp"
-│   ├── FlexHAL.hpp   // ライブラリ公開用 API (実装を含む場合がある)
-│   ├── FlexHAL.cpp   // 実装を有効化し、ヘッダをインクルードする唯一のソースファイル
-│   └── flexhal/      // 公開APIヘッダ群 (実装を含む場合がある)
-│       ├── internal/     # Internal, environment-specific implementations (Do not use directly)
-│       │   ├── platform/ # Platform-specific (e.g., ESP32 series, native OS) implementations
-│       │   │   └── ...   # Platform vendor/board specific folders (e.g., espressif/esp32s3)
-│       │   ├── framework/# Framework-specific (e.g., Arduino, ESP-IDF, SDL) implementations
-│       │   │   └── ...   # Framework specific folders (e.g., arduino, esp-idf)
-│       │   └── arch/     # CPU Architecture-specific (e.g., Xtensa, ARM) implementations
-│       │       └── ...   # Architecture specific folders (e.g., xtensa, armv7e-m)
-│       ├── utils/        # Common utility code (Logging, etc.), always included
+│   ├── FlexHAL.h          # エイリアス役。内容は #include "FlexHAL.hpp"
+│   ├── FlexHAL.hpp        # ライブラリ公開用 API (実装を含む場合がある)
+│   ├── FlexHAL.cpp        # 実装を有効化し、ヘッダをインクルードする唯一のソースファイル
+│   └── flexhal/           # 公開APIヘッダ群 (実装を含む場合がある)
+│       ├── __include.h    # Top-level internal include file
+│       ├── version.h      # セマンティックバージョニング用のバージョン情報マクロ定義
+│       ├── internal/      # 内部向け実装 (環境依存のAPIを提供する階層。ユーザーによる直接操作は推奨されない)
+│       │   ├── platform/  # プラットフォーム依存API (ESP32とかSAMD51とかNative(デスクトップOS)とか)
+│       │   │   └── ...    # espressif,microchipなどベンダ階層を持つ。その配下にマイコン種別などの階層
+│       │   ├── framework/ # フレームワーク依存API
+│       │   │   └── ...    # arduino, esp-idf, cmsis, sdl
+│       │   └── arch/      # CPUアーキテクチャ依存API
+│       │       └── ...    # xtensa::lx6 , arm::armv7e-m, riscv::rv32imc
+│       ├── fallback/      # フォールバック実装API階層
+│       │   └── ...        # (e.g., basic printf logger), always included
+│       ├── utils/         # Common utility code (Logging, etc.), always included
 │       │   └── ...
-│       ├── fallback/     # Fallback implementations (e.g., basic printf logger), always included
-│       │   └── ...
-│       └── __include.h   # Top-level internal include file
+│       └── ...
 ```
 ### /FlexHAL/src/ フォルダの配置ルール
 - このフォルダはArduinoライブラリとして、ビルド対象やインクルードパスとなるフォルダ。
 - ユーザーが直接使用するヘッダファイルとして、 `FlexHAL.hpp` と `FlexHAL.h` が配置される。
-- ソースファイルは `/FlexHAL/src/FlexHAL.cpp` のみを唯一のビルド対象ソースファイルとする。これ以外の拡張子 `.c` `.cpp` のファイルはどこにも配置しない。
-- 上記の理由は、ビルド対象のファイルが増えると WindowsでArduinoIDE使用時のビルド時間が長くなるので、これを短縮するため、
+- ソースファイルは `FlexHAL.cpp` のみを唯一のビルド対象ソースファイルとする。これ以外には拡張子 `.c` `.cpp` のファイルはサブフォルダを含めてプロジェクト内に存在させない。
+  - 上記の理由はビルド対象ファイル数を抑えること。ファイルが増えるとWindows版ArduinoIDEでのビルド時間が長くなる。
 - 上記の`FlexHAL.cpp` の内容は、まず `#define FLEXHAL_INTERNAL_IMPLEMENTATION` を記述し、その後に `#include "FlexHAL.hpp"` を記述する。これにより、ライブラリ全体のヘッダ内実装がこのファイルでコンパイルされる。
 - C++の実装は、原則として対応する `.hpp` ヘッダファイル内に記述する。
 - ヘッダファイル内の実装コードは `#ifdef FLEXHAL_INTERNAL_IMPLEMENTATION` / `#endif` マクロで囲み、ヘッダをインクルードするだけでは実装がコンパイルされないようにする。
-- ビルド環境においては、`/FlexHAL/src/FlexHAL.cpp` のみをビルド対象とする。
-- インクルードガードは原則 `#pragma once` とするが、 `/FlexHAL/src/FlexHAL.h` および `/FlexHAL/src/FlexHAL.hpp` のみ `ifndef` + `define`マクロ方式とする。これはユーザーコード側で、`ifndef`マクロによって対象ファイルがincludeされているかどうかを判断可能にするため。
+- インクルードガードは原則 `#pragma once` とするが、 `FlexHAL.h` および `FlexHAL.hpp` のみ `ifndef` + `define`マクロ方式とする。これはユーザーコード側で、`ifndef`マクロによって本ライブラリがincludeされているかどうかを判断可能にするため。
+
+### /FlexHAL/src/flexhal/ フォルダおよびその配下の配置ルール
+
+- FlexHAL/src/flexhal/ フォルダは 名前空間 flexhal と対応する。
+- namespace flexhal::foo:: に所属する関数のコードは FlexHAL/src/flexhal/foo.hpp ファイルに記述する。
+- namespace flexhal::foo:: に所属するclassやnamespaceは FlexHAL/src/flexhal/foo/ フォルダに配置する。
+- フォルダ内にファイルやフォルダを追加・削除した場合は、所属フォルダの __include.h ファイルも更新すること。
 
 ### コーディング規約 (一部)
 
