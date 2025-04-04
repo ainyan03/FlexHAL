@@ -1,6 +1,40 @@
 ## ヘッダ内実装のルール (`.hpp` ファイル)
 
-FlexHAL では、ライブラリのビルドを簡素化し、Arduino IDE などでの互換性を高めるため、実装コードを原則としてヘッダファイル (`.hpp`) 内に記述します。
+実装部を構成するファイル・フォルダはすべて /FlexHAL/src/flexhal/ フォルダ配下に配置されます。
+拡張子は `.hpp` で統一し、 `.h` ファイルは原則として使用しない。例外は `__detect.h` です。
+
+### 名前空間とファイル・フォルダ階層の対応ルール
+以下のような foo, bar 階層がある場合を例に説明します。
+
+```
+flexhal/           # 1. flexhal名前空間のルート
+├─ foo.hpp         # 2. flexhal::foo 階層用ヘッダ
+├─ foo/            # 3. flexhal::foo 階層用フォルダ
+│  ├─ bar.hpp      # 4. flexhal::foo::bar 階層用ヘッダ
+│  └─ bar/         # 5. flexhal::foo::bar 階層用フォルダ
+│     ├─ IObj.hpp  # 6. flexhal::foo::Iobj インターフェイス定義ファイル
+│     └─ Obj.hpp   # 7. flexhal::foo::Obj クラス定義ファイル
+```
+
+- ヘッダおよびフォルダは、同名の namespace と対応します。
+- 例1の flexhal フォルダは namespace flexhal を表します。
+- flexhal/foo/フォルダおよびflexhal/foo.hppヘッダは namespace flexhal::foo を表します。
+- フォルダ内にサブフォルダを配置することで、namespace階層のネストを表します。
+- フォルダとヘッダは原則ペアで配置します。
+- ただし、ヘッダのみで足りる場合は、フォルダを配置しなくても良いものとします。
+- ヘッダに記述できるものは以下の通り。
+  - 子階層のヘッダのインクルード文 (子階層がある場合は必須)
+  - 比較的小規模な構造体
+  - 関数API
+  - 変数やオブジェクトのインスタンス
+- フォルダに配置できるものは以下の通り。
+  - 子階層のフォルダ
+  - 子階層のヘッダファイル
+  - 比較的大きな構造体のヘッダファイル
+  - クラス・インターフェイスのヘッダファイル
+- 例では、 foo 階層は子階層 bar を持つため、 foo.hpp に #include "foo/bar.hpp" を記述します。
+- 例では、 bar 階層は IObj.hpp および Obj.hpp を持つため、 bar.hpp に #include "bar/IObj.hpp" および #include "bar/Obj.hpp" を記述します。
+
 
 ### 実装コードの配置場所
 

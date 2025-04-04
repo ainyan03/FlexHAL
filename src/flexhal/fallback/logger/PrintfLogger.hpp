@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../utils/logger/ILogger.hpp"
+#include "../../utils/logger.hpp"
 #include <stdio.h> // For printf
 #include <stdarg.h> // For va_list
 

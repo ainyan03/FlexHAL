@@ -11,41 +11,43 @@
 
 ### フォルダ構成の概要
 ```
-FlexHAL/
-├── library.properties
-├── library.json
-├── platformio.ini         # PlatformIOの設定ファイル (ビルドやテスト用の設定)
-├── examples/              # Arduinoライブラリとしてのサンプルフォルダ
-│   └── build_test/        # ビルドテスト用サンプル
-│       ├── build_test.ino # ビルドテスト用サンプルのArduinoスケッチ(中身は空)
-│       └── src/           # ビルドテスト用サンプルの中身
-│           └── main.cpp   # ビルド対象ファイル
-├── src/
-│   ├── FlexHAL.h          # エイリアス役。内容は #include "FlexHAL.hpp"
-│   ├── FlexHAL.hpp        # ライブラリ公開用 API (実装を含む場合がある)
-│   ├── FlexHAL.cpp        # 実装を有効化し、ヘッダをインクルードする唯一のソースファイル
-│   └── flexhal/           # 公開APIヘッダ群 (実装を含む場合がある)
-│       ├── base/          # 基本定義と言語機能の互換性レイヤー
-│       │   ├── cpp/       # C++バージョン互換レイヤー
-│       │   │   ├── compat.hpp    # C++バージョン依存の機能を抽象化
-│       │   │   └── __include.h   # cpp/ フォルダのインクルードファイル
-│       │   ├── error.hpp  # エラーコード定義 (予定)
-│       │   ├── types.hpp  # 基本型定義 (予定)
-│       │   └── __include.h
-│       ├── __include.h    # Top-level internal include file
-│       ├── version.h      # セマンティックバージョニング用のバージョン情報マクロ定義
-│       ├── internal/      # 内部向け実装 (環境依存のAPIを提供する階層。ユーザーによる直接操作は推奨されない)
-│       │   ├── platform/  # プラットフォーム依存API (ESP32とかSAMD51とかNative(デスクトップOS)とか)
-│       │   │   └── ...    # espressif,microchipなどベンダ階層を持つ。その配下にマイコン種別などの階層
-│       │   ├── framework/ # フレームワーク依存API
-│       │   │   └── ...    # arduino, esp-idf, cmsis, sdl
-│       │   └── arch/      # CPUアーキテクチャ依存API
-│       │       └── ...    # xtensa::lx6 , arm::armv7e-m, riscv::rv32imc
-│       ├── fallback/      # フォールバック実装API階層
-│       │   └── ...        # (e.g., basic printf logger), always included
-│       ├── utils/         # Common utility code (Logging, etc.), always included
-│       │   └── ...
-│       └── ...
+FlexHAL/                  # FlexHALライブラリのルート
+├─ library.properties     # ArduinoIDEのライブラリ設定ファイル
+├─ library.json           # PlatformIOのライブラリ設定ファイル
+├─ platformio.ini         # PlatformIOの設定ファイル (ビルドやテスト用の設定)
+├─ examples/              # Arduinoライブラリとしてのサンプルフォルダ
+│  └─ simple/             # 単純なサンプル
+│     ├─ simple.ino       # 単純なサンプルのArduinoスケッチ(中身は空)
+│     └─ src/             # 単純なサンプルの中身
+│        └─ main.cpp      # 単純なサンプルのビルド対象ファイル
+├─ src/
+│  ├─ FlexHAL.h           # エイリアス役。内容は #include "FlexHAL.hpp"
+│  ├─ FlexHAL.hpp         # ライブラリ公開用 API (実装を含む場合がある)
+│  ├─ FlexHAL.cpp         # 実装を有効化し、ヘッダをインクルードする唯一のソースファイル
+│  └─ flexhal/            # 公開APIヘッダ群 (実装を含む場合がある)
+│     ├─ base.h           # base階層用ヘッダ
+│     ├─ base/            # 基本定義と言語機能の互換性レイヤー
+│     │  ├─ cpp.h         # cpp階層用ヘッダ
+│     │  ├─ cpp/          # C++バージョン互換レイヤー
+│     │  │  ├─ compat.hpp # C++バージョン依存の機能を抽象化
+│     │  │  └─ ...        # cpp/ フォルダのインクルードファイル
+│     │  ├─ error.hpp     # エラーコード定義
+│     │  └─ ...
+│     ├─ version.h        # セマンティックバージョニング用のバージョン情報マクロ定義
+│     ├─ internal.hpp     # internal階層用ヘッダ
+│     ├─ internal/        # 内部実装 (環境依存API階層。ユーザー直接操作は推奨されない)
+│     │  ├─ platform.hpp  # platform階層用ヘッダ
+│     │  ├─ platform/     # プラットフォーム依存API (ESP32とかSAMD51とかNative(デスクトップOS)とか)
+│     │  │  └─ ...        # espressif,microchipなどベンダ階層を持つ。その配下にマイコン種別などの階層
+│     │  ├─ framework/    # フレームワーク依存API
+│     │  │  └─ ...        # arduino, esp-idf, cmsis, sdl
+│     │  └─ arch/         # CPUアーキテクチャ依存API
+│     │     └─ ...        # xtensa::lx6 , arm::armv7e-m, riscv::rv32imc
+│     ├─ fallback/        # フォールバック実装API階層
+│     │  └─ ...           # (e.g., basic printf logger), always included
+│     ├─ utils/           # Common utility code (Logging, etc.), always included
+│     │  └─ ...
+│     └─ ...
 ```
 ### /FlexHAL/src/ フォルダの配置ルール
 - このフォルダはArduinoライブラリとして、ビルド対象やインクルードパスとなるフォルダ。
@@ -58,11 +60,11 @@ FlexHAL/
 - インクルードガードは原則 `#pragma once` とするが、 `FlexHAL.h` および `FlexHAL.hpp` のみ `ifndef` + `define`マクロ方式とする。これはユーザーコード側で、`ifndef`マクロによって本ライブラリがincludeされているかどうかを判断可能にするため。
 
 ### /FlexHAL/src/flexhal/ フォルダおよびその配下の配置ルール
-
+- フォルダ階層はnamespace階層と同期するように管理する。
 - FlexHAL/src/flexhal/ フォルダは 名前空間 flexhal と対応する。
-- namespace flexhal::foo:: に所属する関数のコードは FlexHAL/src/flexhal/foo.hpp ファイルに記述する。
-- namespace flexhal::foo:: に所属するclassやnamespaceは FlexHAL/src/flexhal/foo/ フォルダに配置する。
-- フォルダ内にファイルやフォルダを追加・削除した場合は、所属フォルダの __include.h ファイルも更新すること。
+- namespace flexhal::foo:: に所属する関数のコードは flexhal/foo.hpp ファイルに記述する。
+- namespace flexhal::foo:: に所属するclassやnamespaceは flexhal/foo/ フォルダに配置する。
+- namespace flexhal::foo:: のサブフォルダにヘッダがある場合は、flexhal/foo.hpp からinclude すること。
 
 ### コーディング規約 (一部)
 
@@ -82,7 +84,7 @@ FlexHAL/
   - `/src/flexhal/internal/platform/` : 特定の実行環境プラットフォーム（例: `espressif/esp32`, `native`）の実装。PlatformIO の `platform` の概念に近い階層です。
   - `/src/flexhal/internal/framework/` : 特定のソフトウェアフレームワーク（例: `arduino`, `esp-idf`, `sdl`）の実装。
   - `/src/flexhal/internal/arch/` : 特定のCPUアーキテクチャ（例: `xtensa`, `arm`）の実装。
-- 環境依存コードの検出・インクルードには、各階層に配置する `__detect.h` および `__include.h` ファイルを使用する (詳細は [03_Detection_Inclusion.md](./03_Detection_Inclusion.md) を参照)
+- 環境依存コードの検出・インクルードには、各階層に配置する `__detect.h` ファイルを使用する (詳細は [03_Detection_Inclusion.md](./03_Detection_Inclusion.md) を参照)
 - `/src/flexhal/utils/` フォルダ内
   - ライブラリ全体で共通して使用されるユーティリティ機能を配置する。
   - 例: Loggerインターフェース (`ILogger.hpp`)
@@ -91,7 +93,7 @@ FlexHAL/
   - これらの実装は、対応するプラットフォーム固有の実装が存在しない場合や、明示的に選択された場合に使用される。
   - 例: `printf` を使用した基本的なロガー実装 (`PrintfLogger.hpp`)
 
-#### __detect.h , __include.h のルール
+#### __detect.h のルール
 - 詳細は [03_Detection_Inclusion.md](./03_Detection_Inclusion.md) を参照
 
 ### `src/flexhal/internal/`
@@ -100,7 +102,6 @@ FlexHAL/
 *   **原則**:
     *   このディレクトリ内のコードは、通常ユーザーが直接利用することは**推奨されません**。FlexHALの共通インターフェースを通じて利用されることを想定しています。
     *   `__detect.h` ファイルを各サブディレクトリ（`platform`, `framework`, `arch`）やその更に下の階層に配置し、利用可能な機能や環境を定義します。
-    *   `__include.h` ファイルを配置し、検出された機能に対応するヘッダーファイルをインクルードします。
 *   **サブディレクトリ**:
     *   `platform/`: 特定の実行環境プラットフォーム（例: `espressif/esp32`, `native`）の実装。PlatformIO の `platform` の概念に近い階層です。
     *   `framework/`: 特定のソフトウェアフレームワーク（例: `arduino`, `esp-idf`, `sdl`）の実装。

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../logger.hpp"
+
 #include <cstdarg> // For std::va_list
 
 // Forward declare LogProxy - needed even if globals are moved, 
@@ -12,18 +14,6 @@ namespace flexhal {
 namespace utils {
 namespace logger {
 
-// --- Log Level Enum ---
-/**
- * @brief Defines the logging levels.
- */
-enum class LogLevel {
-    NONE = 0, ///< No logging
-    ERROR,    ///< Critical errors
-    WARN,     ///< Warnings
-    INFO,     ///< Informational messages
-    DEBUG,    ///< Debug messages
-    VERBOSE   ///< Verbose debug messages
-};
 
 // --- Logger Interface ---
 /**

@@ -5,7 +5,8 @@
 
 #include "cpp/compat.hpp"
 
-namespace flexhal::base {
+namespace flexhal {
+namespace base {
 
 // エラーコードの基本型定義
 using error_t = int16_t;
@@ -50,4 +51,5 @@ FLEXHAL_INTERNAL_NODISCARD constexpr bool is_ok(error_t err) {
 static_assert(sizeof(error_t) == 2, "error_t must be 16-bit");
 static_assert(std::numeric_limits<error_t>::is_signed, "error_t must be signed");
 
-} // namespace flexhal::base
+} // namespace base
+} // namespace flexhal

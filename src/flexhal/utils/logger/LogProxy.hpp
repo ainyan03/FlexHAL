@@ -1,7 +1,9 @@
 #pragma once
 
+#include "../logger.hpp" // Needs LogLevel, ILogger*, _active_logger, _default_log_level
+#include "ILogger.hpp"
+
 #include <cstdarg>    // For va_start, va_end
-#include "logger_globals.hpp" // Needs LogLevel, ILogger*, _active_logger, _default_log_level
 
 namespace flexhal {
 namespace utils {

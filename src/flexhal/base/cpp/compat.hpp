@@ -1,6 +1,8 @@
 #pragma once
 
-namespace flexhal::base::cpp {
+namespace flexhal {
+namespace base {
+namespace cpp {
 
 // C++のバージョンチェック
 #if defined(__cplusplus)
@@ -24,4 +26,8 @@ namespace flexhal::base::cpp {
   #define FLEXHAL_INTERNAL_USE_CPP17_FEATURES
 #endif
 
-} // namespace flexhal::base::cpp
+
+} // namespace cpp
+} // namespace base
+} // namespace flexhal
+

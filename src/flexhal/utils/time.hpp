@@ -2,6 +2,8 @@
 
 #include "flexhal/base/error.hpp"
 
+#if 0
+
 #if defined(ARDUINO)
   #include "flexhal/internal/framework/arduino/utils/time.hpp"
   namespace flexhal::utils::time {
@@ -14,4 +16,6 @@
   }
 #else
   #error "No time implementation available for this platform"
+#endif
+
 #endif

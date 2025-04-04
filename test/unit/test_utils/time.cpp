@@ -1,7 +1,8 @@
-#include "flexhal/utils/time.hpp"
+
+#include <FlexHAL.h>
 #include <gtest/gtest.h>
 
-namespace flexhal::test::time {
+namespace flexhal_test {
 
 // delay_msのテスト実装
 inline bool test_delay_ms(uint32_t delay_time = 100, double tolerance = 0.1) {
@@ -10,7 +11,7 @@ inline bool test_delay_ms(uint32_t delay_time = 100, double tolerance = 0.1) {
   auto elapsed = flexhal::utils::time::millis() - start;
 
   // 遅延時間が期待範囲内かチェック
-  return (result == to_error(base::status::ok)) &&
+  return (result == to_error(flexhal::base::status::ok)) &&
          (elapsed >= delay_time) &&
          (elapsed <= delay_time * (1.0 + tolerance));
 }
@@ -23,7 +24,7 @@ inline bool test_delay_us(uint32_t delay_time = 1000) {
 
   // マイクロ秒レベルでは環境による誤差が大きいので、
   // おおよその範囲でチェック（0.5倍～1.5倍）
-  return (result == to_error(base::status::ok)) &&
+  return (result == to_error(flexhal::base::status::ok)) &&
          (elapsed >= delay_time) &&
          (elapsed <= delay_time * 1.5);
 }
@@ -63,29 +64,24 @@ inline bool test_millis_micros_consistency(uint32_t delay_time = 500, double tol
   return diff <= (elapsed_millis * tolerance);
 }
 
-} // namespace flexhal::test::time
+} // namespace flexhal_test
 
 TEST(TimeTest, DelayMs) {
-  EXPECT_TRUE(flexhal::test::time::test_delay_ms());
+  EXPECT_TRUE(flexhal_test::test_delay_ms());
 }
 
 TEST(TimeTest, DelayUs) {
-  EXPECT_TRUE(flexhal::test::time::test_delay_us());
+  EXPECT_TRUE(flexhal_test::test_delay_us());
 }
 
 TEST(TimeTest, MillisProgression) {
-  EXPECT_TRUE(flexhal::test::time::test_millis_progression());
+  EXPECT_TRUE(flexhal_test::test_millis_progression());
 }
 
 TEST(TimeTest, MicrosProgression) {
-  EXPECT_TRUE(flexhal::test::time::test_micros_progression());
+  EXPECT_TRUE(flexhal_test::test_micros_progression());
 }
 
 TEST(TimeTest, MillisMicrosConsistency) {
-  EXPECT_TRUE(flexhal::test::time::test_millis_micros_consistency());
-}
-
-int main(int argc, char **argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+  EXPECT_TRUE(flexhal_test::test_millis_micros_consistency());
 }

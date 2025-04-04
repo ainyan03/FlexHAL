@@ -4,7 +4,11 @@
 #include <thread>
 #include "flexhal/base/error.hpp"
 
-namespace flexhal::internal::platform::native::utils::time {
+// namespace flexhal::internal::platform::native::utils::time {
+namespace flexhal {
+namespace fallback {
+namespace utils {
+namespace time {
 
   inline base::error_t delay_ms(uint32_t ms) {
     std::this_thread::sleep_for(std::chrono::milliseconds(ms));
@@ -31,5 +35,20 @@ namespace flexhal::internal::platform::native::utils::time {
       ).count()
     );
   }
+} // namespace time
+} // namespace utils
+} // namespace fallback
+} // namespace flexhal
 
-} // namespace flexhal::internal::platform::native::utils::time
+#ifndef FLEXHAL_INTERNAL_FLEXHAL_UTILS_TIME
+#define FLEXHAL_INTERNAL_FLEXHAL_UTILS_TIME flexhal::fallback::utils::time
+#endif
+
+namespace flexhal {
+namespace utils {
+namespace time {
+  // 公開用APIとして、native環境のtimeを公開
+  using namespace fallback::utils::time;
+}
+} // namespace utils
+} // namespace flexhal

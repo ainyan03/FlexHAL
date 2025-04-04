@@ -1,16 +1,27 @@
 #pragma once
 
-#include "ILogger.hpp" // For LogLevel enum and ILogger interface
-#include <cstdarg>     // For std::va_list in LogProxy methods if needed indirectly
-
-// Forward declare LogProxy used by the global Log instance
-namespace flexhal { namespace utils { namespace logger { class LogProxy; } } }
-
 namespace flexhal {
 namespace utils {
 namespace logger {
 
-// --- Global Logger Management Declarations ---
+// Forward declarations
+
+class ILogger;
+class LogProxy;
+
+// --- Log Level Enum ---
+/**
+ * @brief Defines the logging levels.
+ */
+enum class LogLevel {
+    NONE = 0, ///< No logging
+    ERROR,    ///< Critical errors
+    WARN,     ///< Warnings
+    INFO,     ///< Informational messages
+    DEBUG,    ///< Debug messages
+    VERBOSE   ///< Verbose debug messages
+};
+
 
 // Pointer to the currently active logger instance
 extern ILogger* _active_logger;
@@ -48,11 +59,13 @@ extern LogProxy Log;
 } // namespace utils
 } // namespace flexhal
 
+// Include headers from subdirectories
+#include "logger/ILogger.hpp"
+#include "logger/LogProxy.hpp"
+
 // --- Implementation (definitions) ---
 // This section is included only once in the entire project (e.g., in FlexHAL.cpp)
 #ifdef FLEXHAL_INTERNAL_IMPLEMENTATION
-
-#include "LogProxy.hpp" // Include LogProxy definition only when implementing
 
 namespace flexhal { namespace utils { namespace logger {
 
@@ -79,3 +92,4 @@ LogLevel getLogLevel() {
 } } } // namespace flexhal::utils::logger
 
 #endif // FLEXHAL_INTERNAL_IMPLEMENTATION
+

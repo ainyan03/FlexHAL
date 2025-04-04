@@ -74,7 +74,7 @@ FlexHALは、以下の目標を掲げて開発されているハードウェア�
 
 - [フォルダ構造](01_Folder_Structure.md)
 - [名前空間ルール](02_Namespace_Rules.md)
-- [検出・インクルードの仕組み](03_Detection_Inclusion.md)
-- [ヘッダ内実装のルール](04_Header_Implementation.md)
+- [ヘッダ内実装のルール](03_Header_Implementation.md)
+- [検出・インクルードの仕組み](04_Detection_Inclusion.md)
 - [API仕様のルール](05_API_Rules.md)
 - [命名規則](06_Naming_Convention.md)
