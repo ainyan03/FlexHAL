@@ -8,21 +8,16 @@
 
 FlexHALは柔軟なハードウェア抽象化レイヤー（HAL）ライブラリです。ESP32やRP2040などのマイコン向けの開発を効率化し、さらにSDLを使用してデスクトップ環境でのエミュレーションも可能にします。
 
-## 特徴 ✨
+## 目標 ✨
 
 - マルチプラットフォーム対応（ESP32, RP2040, SDL）
-- 3層構造アーキテクチャ
+- プラットフォーム・フレームワーク・RTOSの3層構造アーキテクチャ
 - シンプルで一貫性のあるAPI
 - デスクトップ環境でのエミュレーション機能
 
-## 詳細情報 📚
+## 設計・計画 📚
 
-詳細な情報は[Wiki](https://github.com/ainyan03/FlexHAL/wiki)を参照してください：
-
-- [プロジェクト概要](https://github.com/ainyan03/FlexHAL/wiki/Project-Overview)
-- [設計判断ログ](https://github.com/ainyan03/FlexHAL/wiki/Design-Decisions)
-- [開発フロー](https://github.com/ainyan03/FlexHAL/wiki/Development-Flow)
-- [開発者ガイド](https://github.com/ainyan03/FlexHAL/wiki/Developer-Guide)
+設計に関する情報は[design](design/00_Overview.md)を参照してください：
 
 ## ライセンス 📄
 

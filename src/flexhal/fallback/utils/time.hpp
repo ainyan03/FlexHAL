@@ -4,6 +4,10 @@
 #include <thread>
 #include "flexhal/base/error.hpp"
 
+#ifndef FLEXHAL_INTERNAL_FLEXHAL_UTILS_TIME
+#define FLEXHAL_INTERNAL_FLEXHAL_UTILS_TIME flexhal::fallback::utils::time
+#endif
+
 // namespace flexhal::internal::platform::native::utils::time {
 namespace flexhal {
 namespace fallback {
@@ -40,15 +44,3 @@ namespace time {
 } // namespace fallback
 } // namespace flexhal
 
-#ifndef FLEXHAL_INTERNAL_FLEXHAL_UTILS_TIME
-#define FLEXHAL_INTERNAL_FLEXHAL_UTILS_TIME flexhal::fallback::utils::time
-#endif
-
-namespace flexhal {
-namespace utils {
-namespace time {
-  // 公開用APIとして、native環境のtimeを公開
-  using namespace fallback::utils::time;
-}
-} // namespace utils
-} // namespace flexhal

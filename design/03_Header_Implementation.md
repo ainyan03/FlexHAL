@@ -37,10 +37,8 @@ flexhal/           # 1. flexhal名前空間のルート
 
 
 ### 実装コードの配置場所
-
-- 各ヘッダファイル (`.hpp`) 内の実装コードは、**ファイルの最後にまとめて記述します**。
+- 実装部は、一般的には `.cpp` ですが、FlexHALにおいては、ヘッダファイル (`.hpp`) 内の後半部分に、`#ifdef FLEXHAL_INTERNAL_IMPLEMENTATION` マクロで囲み、マクロガードをつけてまとめて配置します。
 - ファイルの前半部分には、クラス定義、関数宣言、インライン関数など、**インターフェース（宣言）のみを記述**し、実装の詳細は含めません。
-- ファイルの末尾に、実装コードを記述するセクションを設けます。このセクションは `#ifdef FLEXHAL_INTERNAL_IMPLEMENTATION` マクロで囲みます。
 
 ```cpp
 // --- 例: my_feature.hpp ---
@@ -71,14 +69,8 @@ inline int simpleInline(int x) {
     return x * 2;
 }
 
-} // namespace my_feature
-} // namespace flexhal
-
 // --- 実装セクション (ファイルの最後に配置) ---
 #ifdef FLEXHAL_INTERNAL_IMPLEMENTATION
-
-namespace flexhal {
-namespace my_feature {
 
 MyClass::MyClass() : _internalState(0) {
     // コンストラクタの実装
@@ -95,10 +87,11 @@ int utilityFunction(uint8_t input) {
     return static_cast<int>(input) + 10;
 }
 
+#endif // FLEXHAL_INTERNAL_IMPLEMENTATION
+
 } // namespace my_feature
 } // namespace flexhal
 
-#endif // FLEXHAL_INTERNAL_IMPLEMENTATION
 ```
 
 ### 実装コードの有効化

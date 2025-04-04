@@ -25,15 +25,20 @@ FlexHAL/                  # FlexHALライブラリのルート
 │  ├─ FlexHAL.hpp         # ライブラリ公開用 API (実装を含む場合がある)
 │  ├─ FlexHAL.cpp         # 実装を有効化し、ヘッダをインクルードする唯一のソースファイル
 │  └─ flexhal/            # 公開APIヘッダ群 (実装を含む場合がある)
-│     ├─ base.h           # base階層用ヘッダ
+│     ├─ hal.hpp          # HAL階層用ヘッダ
+│     ├─ hal/             # HAL階層
+│     │  ├─ gpio.hpp      # gpio階層用ヘッダ
+│     │  ├─ gpio/         # gpio階層
+│     │  └─ ...           # HAL階層用ヘッダ群
+│     ├─ base.hpp         # base階層用ヘッダ
 │     ├─ base/            # 基本定義と言語機能の互換性レイヤー
-│     │  ├─ cpp.h         # cpp階層用ヘッダ
+│     │  ├─ cpp.hpp       # cpp階層用ヘッダ
 │     │  ├─ cpp/          # C++バージョン互換レイヤー
 │     │  │  ├─ compat.hpp # C++バージョン依存の機能を抽象化
 │     │  │  └─ ...        # cpp/ フォルダのインクルードファイル
 │     │  ├─ error.hpp     # エラーコード定義
 │     │  └─ ...
-│     ├─ version.h        # セマンティックバージョニング用のバージョン情報マクロ定義
+│     ├─ version.hpp      # セマンティックバージョニング用のバージョン情報マクロ定義
 │     ├─ internal.hpp     # internal階層用ヘッダ
 │     ├─ internal/        # 内部実装 (環境依存API階層。ユーザー直接操作は推奨されない)
 │     │  ├─ platform.hpp  # platform階層用ヘッダ
