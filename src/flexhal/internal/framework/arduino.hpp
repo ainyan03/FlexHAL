@@ -4,6 +4,6 @@
 
 #if FLEXHAL_DETECT_INTERNAL_FRAMEWORK_ARDUINO
 
-#include "arduino/utils.hpp"
+#include "arduino/hal.hpp"
 
-#endif
+#endif // FLEXHAL_DETECT_INTERNAL_FRAMEWORK_ARDUINO
