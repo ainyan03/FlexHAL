@@ -98,7 +98,6 @@
   - `arm`
     - `cortex_m` (例: M0, M4, M7)
   - `riscv`
-```
 
 ```mermaid
 graph TD

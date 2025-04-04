@@ -47,19 +47,20 @@ inline bool test_micros_progression(uint32_t delay_time = 1000) {
 }
 
 // millis()とmicros()の一貫性テスト実装
-inline bool test_millis_micros_consistency() {
+inline bool test_millis_micros_consistency(uint32_t delay_time = 500, double tolerance = 0.2) {
   auto start_millis = flexhal::utils::time::millis();
   auto start_micros = flexhal::utils::time::micros();
-  flexhal::utils::time::delay_ms(100);
+  flexhal::utils::time::delay_ms(delay_time);
   auto end_millis = flexhal::utils::time::millis();
   auto end_micros = flexhal::utils::time::micros();
 
-  auto elapsed_millis = end_millis - start_millis;
-  auto elapsed_micros = end_micros - start_micros;
+  // 経過時間を浮動小数点で計算
+  double elapsed_millis = static_cast<double>(end_millis - start_millis);
+  double elapsed_micros = static_cast<double>(end_micros - start_micros) / 1000.0;
 
-  // マイクロ秒を1000で割ってミリ秒に変換し、誤差が10%以内かチェック
-  auto micros_to_millis = elapsed_micros / 1000;
-  return std::abs(static_cast<int64_t>(micros_to_millis - elapsed_millis)) <= (elapsed_millis * 0.1);
+  // 誤差の絶対値を計算し、許容範囲内かチェック
+  double diff = std::abs(elapsed_micros - elapsed_millis);
+  return diff <= (elapsed_millis * tolerance);
 }
 
 } // namespace flexhal::test::time

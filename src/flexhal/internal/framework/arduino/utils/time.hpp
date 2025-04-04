@@ -5,14 +5,14 @@
 
 namespace flexhal::internal::framework::arduino::utils::time {
 
-  inline error_t delay_ms(uint32_t ms) {
+  inline base::error_t delay_ms(uint32_t ms) {
     ::delay(ms);
-    return to_error(status::ok);
+    return to_error(base::status::ok);
   }
 
-  inline error_t delay_us(uint32_t us) {
+  inline base::error_t delay_us(uint32_t us) {
     ::delayMicroseconds(us);
-    return to_error(status::ok);
+    return to_error(base::status::ok);
   }
 
   inline uint32_t millis() {
