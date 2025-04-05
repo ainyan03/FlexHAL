@@ -4,7 +4,7 @@
 // #include "flexhal/internal/config.hpp" // Use src-relative path
 #include "../../__detect.h"               // Relative path to parent's detect header
 
-#if FLEXHAL_DETECT_INTERNAL_FRAMEWORK_ARDUINO == 1
+#if FLEXHAL_DETECT_INTERNAL_FRAMEWORK_ARDUINO
 
 #include "flexhal/hal/gpio.hpp"      // Use src-relative path
 #include "flexhal/hal/gpio/IGpio.hpp" // Use src-relative path

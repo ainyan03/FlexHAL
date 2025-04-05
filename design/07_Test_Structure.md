@@ -61,11 +61,7 @@ build_type = test
 test_framework = googletest
 lib_deps = googletest
 test_build_src = yes
-test_transport = custom
 build_flags =
-  -DFLEXHAL_TESTING
-  -DFLEXHAL_TEST_ASSERT_ENABLE
-  -DUSE_GOOGLETEST
   -I.
 ```
 
