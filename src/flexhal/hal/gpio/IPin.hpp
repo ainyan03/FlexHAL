@@ -1,6 +1,6 @@
 #pragma once
 
-#include <flexhal/base/error.hpp>
+#include "flexhal/base/status.hpp"      // For base::status
 #include "../gpio.hpp" // Correct include path for types like PinMode, PinConfig
 #include <cstdint>
 

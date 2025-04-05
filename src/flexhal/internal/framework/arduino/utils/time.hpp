@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include "flexhal/base/error.hpp"
+#include "flexhal/base/status.hpp"
 
 #ifndef FLEXHAL_INTERNAL_FLEXHAL_UTILS_TIME
 #define FLEXHAL_INTERNAL_FLEXHAL_UTILS_TIME flexhal::internal::framework::arduino::utils::time

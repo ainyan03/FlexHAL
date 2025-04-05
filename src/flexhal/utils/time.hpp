@@ -1,6 +1,6 @@
 #pragma once
 
-#include "flexhal/base/error.hpp"
+#include "flexhal/base/status.hpp"
 
 #ifndef FLEXHAL_INTERNAL_FLEXHAL_UTILS_TIME
 #include "../../../FlexHAL.hpp"

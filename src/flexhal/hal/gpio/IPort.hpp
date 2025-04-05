@@ -1,7 +1,8 @@
 #pragma once
 
+#include "flexhal/base/status.hpp"
+#include "../gpio.hpp" // Include main gpio header for types
 #include <cstdint>
-#include <flexhal/base/error.hpp>
 
 namespace flexhal { namespace hal { namespace gpio {
 

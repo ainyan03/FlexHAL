@@ -1,8 +1,9 @@
 #pragma once
 
 #include <cstdint>
-
-#include "flexhal/base/error.hpp"
+#include <memory> // For std::shared_ptr
+#include "flexhal/base/status.hpp"
+#include "flexhal/hal/gpio.hpp"
 
 namespace flexhal { namespace hal { namespace gpio {
 
