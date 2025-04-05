@@ -1,40 +1,46 @@
-\
 #pragma once
 
-#include <stddef.h> // For size_t
-#include <stdint.h>
+#include <cstdint>
 
-// Forward declare IPin instead of including the full header if only pointers/references are used
-// However, since we return IPin*, the definition is needed.
-#include "IPin.hpp" 
+#include "flexhal/base/error.hpp"
 
-namespace flexhal {
-namespace hal {
-namespace gpio {
+namespace flexhal { namespace hal { namespace gpio {
 
-// GPIO Peripheral Interface
-// Represents the collection of GPIO pins for a device or peripheral.
+// Forward declarations for interfaces used
+class IPort;
+class IPin; // Keep for context, even if no direct methods use it currently
+
+/**
+ * @brief Represents a GPIO peripheral (e.g., a bank of GPIO ports).
+ *
+ * This interface serves as the entry point to access GPIO ports (IPort)
+ * managed by this peripheral.
+ */
 class IGpio {
 public:
     virtual ~IGpio() = default;
 
     /**
-     * @brief Get the interface for a specific GPIO pin.
-     * 
-     * @param pin_id The identifier (number) of the pin to retrieve.
-     * @return IPin* A pointer to the IPin interface for the requested pin,
-     *               or nullptr if the pin_id is invalid or not available.
+     * @brief Gets the total number of GPIO ports managed by this peripheral.
+     * @return The number of available ports.
      */
-    virtual IPin* getPin(pin_id_t pin_id) = 0;
+    virtual uint32_t getNumberOfPorts() const = 0;
 
     /**
-     * @brief Get the total number of GPIO pins managed by this peripheral.
-     * 
-     * @return size_t The number of available GPIO pins.
+     * @brief Gets a specific GPIO port by its index.
+     * @param port_index The index of the port (0 to getNumberOfPorts()-1).
+     * @return Reference to the IPort interface.
+     * @note Behavior for invalid index is undefined (assertion recommended).
      */
-    virtual size_t getPinCount() const = 0;
-};
+    virtual IPort& getPort(uint32_t port_index) = 0;
+    virtual const IPort& getPort(uint32_t port_index) const = 0;
 
-} // namespace gpio
-} // namespace hal
-} // namespace flexhal
+    // Optional methods from the design document (can be added later):
+    // virtual IPort& getPortByName(char name) = 0;
+    // virtual const IPort& getPortByName(char name) const = 0;
+    // virtual IPin& getPin(/* TBD */) = 0;
+    // virtual const IPin& getPin(/* TBD */) const = 0;
+
+}; // class IGpio
+
+}}} // namespace flexhal::hal::gpio

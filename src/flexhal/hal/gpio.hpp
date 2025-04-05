@@ -13,7 +13,7 @@ namespace gpio {
  * @brief Type definition for representing a GPIO pin identifier within FlexHAL.
  * Typically maps to a platform-specific pin number or index.
  */
-using pin_id_t = uint32_t;
+using pin_id_t = uint8_t;
 
 // Basic pin modes (for simple cases)
 enum class PinMode : uint8_t {
@@ -115,4 +115,5 @@ class IGpio;
 
 // Child interface headers (will be created next)
 #include "gpio/IPin.hpp" 
+#include "gpio/IPort.hpp"
 #include "gpio/IGpio.hpp"

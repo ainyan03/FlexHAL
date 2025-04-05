@@ -1,15 +1,12 @@
-// /Users/lovyan/ainyan/FlexHAL/src/flexhal/internal/framework/arduino/hal/gpio/ArduinoPin.hpp
 #pragma once
 
-// #include "flexhal/internal/config.hpp" // Use src-relative path // Removed unnecessary include
-#include "../../__detect.h"               // Relative path to parent's detect header
+#include <cstdint>
+#include <Arduino.h> // Include Arduino core library
+#include <memory>     // For std::unique_ptr if needed later, maybe not here
 
-#if FLEXHAL_DETECT_INTERNAL_FRAMEWORK_ARDUINO
-
-#include <Arduino.h>
-#include "flexhal/base/error.hpp"    // Use src-relative path
-#include "flexhal/hal/gpio.hpp"      // Use src-relative path
-#include "flexhal/hal/gpio/IPin.hpp" // Use src-relative path
+#include "flexhal/hal/gpio/IPin.hpp"
+#include "flexhal/hal/gpio/IPort.hpp" // Include IPort for getPort()
+#include "flexhal/hal/gpio.hpp"    // Include gpio.hpp for PinMode, PinConfig etc.
 
 namespace flexhal {
 namespace internal {
@@ -20,20 +17,37 @@ namespace gpio {
 
 class ArduinoPin : public flexhal::hal::gpio::IPin {
 public:
-    explicit ArduinoPin(flexhal::hal::gpio::pin_id_t pin_id); 
+    // Constructor needs the parent Port and the pin index within that port
+    explicit ArduinoPin(flexhal::hal::gpio::IPort& port, uint32_t pin_index);
 
-    flexhal::hal::gpio::pin_id_t getPinNumber() const override;
+    // --- IPin Interface Implementation ---
 
+    // Get the parent Port interface
+    flexhal::hal::gpio::IPort& getPort() override;
+    const flexhal::hal::gpio::IPort& getPort() const override;
+
+    // Get the pin's index within its port
+    uint32_t getPinIndex() const override;
+
+    // Configure pin mode (Input, Output, Pullups, etc.) using PinMode enum
+    base::error_t setMode(flexhal::hal::gpio::PinMode mode) override;
+
+    // Configure pin using the detailed PinConfig struct (IPin requires this)
     base::error_t setConfig(const flexhal::hal::gpio::PinConfig& config) override;
-    base::error_t digitalWrite(flexhal::hal::gpio::DigitalValue value) override;
-    flexhal::hal::gpio::DigitalValue digitalRead() override;
-    base::error_t analogWrite(int value) override;
-    int analogRead() override;
-    flexhal::hal::gpio::pin_id_t getPinId() const { return _pin_id; }
+
+    // Digital I/O
+    base::error_t digitalWrite(bool level) override; // Updated parameter to bool
+    int digitalRead() const override;             // Updated return type to int
+
+    // Analog I/O (PWM/DAC/ADC) - Keep existing signatures if they match IPin
+    base::error_t analogWrite(uint32_t value) override; // Keep uint32_t if IPin uses it
+    int analogRead() const override;                  // Keep int if IPin uses it
+
+    // --- End IPin Interface ---
 
 private:
-    flexhal::hal::gpio::pin_id_t _pin_id; 
-    flexhal::hal::gpio::PinConfig _current_config; 
+    flexhal::hal::gpio::IPort& _port; // Reference to the parent port
+    uint32_t _pin_index;              // Pin index within the port
 };
 
 } // namespace gpio
@@ -43,8 +57,11 @@ private:
 } // namespace internal
 } // namespace flexhal
 
-// --- Implementation Section ---
 #ifdef FLEXHAL_INTERNAL_IMPLEMENTATION
+#ifndef FLEXHAL_INTERNAL_FRAMEWORK_ARDUINO_HAL_GPIO_ARDUINOPIN_IPP
+#define FLEXHAL_INTERNAL_FRAMEWORK_ARDUINO_HAL_GPIO_ARDUINOPIN_IPP
+
+#include <Arduino.h> // Make sure Arduino API is available for implementation
 
 namespace flexhal {
 namespace internal {
@@ -53,109 +70,98 @@ namespace arduino {
 namespace hal {
 namespace gpio {
 
-ArduinoPin::ArduinoPin(flexhal::hal::gpio::pin_id_t pin_id)
-    : _pin_id(pin_id)
+// Constructor Implementation
+inline ArduinoPin::ArduinoPin(flexhal::hal::gpio::IPort& port, uint32_t pin_index)
+    : _port(port), _pin_index(pin_index) /*, _pin_number(pin_index) */ // Initialize members. Map index to Arduino pin number if necessary.
 {
-    // Initialize _current_config with default (Input, None, Floating)
-    // Optionally, could read initial pin state if possible/needed, but unlikely reliable.
+    // Initialization logic if needed, e.g., map logical index to physical Arduino pin number
+    // For now, assume pin_index directly corresponds to Arduino pin number for simplicity.
 }
 
-inline flexhal::hal::gpio::pin_id_t ArduinoPin::getPinNumber() const {
-    // Assuming _pin_id directly corresponds to the physical pin number
-    // and fits within uint8_t. Add checks if necessary.
-    return _pin_id;
+// --- IPin Implementation ---
+
+inline flexhal::hal::gpio::IPort& ArduinoPin::getPort() {
+    return _port;
 }
 
-base::error_t ArduinoPin::setConfig(const flexhal::hal::gpio::PinConfig& config)
-{
-    uint8_t arduino_mode = INPUT; // Default to INPUT
-    bool mode_set = false;
+inline const flexhal::hal::gpio::IPort& ArduinoPin::getPort() const {
+    return _port;
+}
 
-    // Map FlexHAL config to Arduino pinMode constants
-    if (config.dir == flexhal::hal::gpio::PinDir::Input) {
-        if (config.pull == flexhal::hal::gpio::PinPull::Up) {
-            arduino_mode = INPUT_PULLUP;
-            mode_set = true;
-#ifdef INPUT_PULLDOWN // Check if the feature macro is defined
-        } else if (config.pull == flexhal::hal::gpio::PinPull::Down) {
-            arduino_mode = INPUT_PULLDOWN;
-            mode_set = true;
-#endif // INPUT_PULLDOWN
-        } else { // No pull or unsupported pull
-            arduino_mode = INPUT;
-            mode_set = true;
-        }
-    } else if (config.dir == flexhal::hal::gpio::PinDir::Output) {
-        if (config.signal_type == flexhal::hal::gpio::PinSignalType::PushPull) {
-            arduino_mode = OUTPUT;
-            mode_set = true;
-#ifdef OUTPUT_OPEN_DRAIN // Check if the feature macro is defined
-        } else if (config.signal_type == flexhal::hal::gpio::PinSignalType::OpenDrain) {
-            arduino_mode = OUTPUT_OPEN_DRAIN;
-            mode_set = true;
-#endif // OUTPUT_OPEN_DRAIN
-        }
-        // Note: Pull settings are typically ignored for output modes in Arduino
-    } else if (config.dir == flexhal::hal::gpio::PinDir::InOut) {
-         // InOut might map to INPUT for reading, OUTPUT for writing? 
-         // Or specific bidirectional modes if platform supports? Needs clarification.
-         // For now, treat like INPUT for pinMode.
-         arduino_mode = INPUT;
-         mode_set = true; 
+inline uint32_t ArduinoPin::getPinIndex() const {
+    return _pin_index; // Return the stored pin index
+}
+
+inline base::error_t ArduinoPin::setMode(flexhal::hal::gpio::PinMode mode) {
+    // Map FlexHAL PinMode to Arduino pinMode() arguments
+    switch (mode) {
+        case flexhal::hal::gpio::PinMode::Input:
+            pinMode(_pin_index, INPUT); // Assuming _pin_index is the Arduino pin number
+            break;
+        case flexhal::hal::gpio::PinMode::InputPullup:
+            pinMode(_pin_index, INPUT_PULLUP);
+            break;
+        case flexhal::hal::gpio::PinMode::InputPulldown:
+            // Arduino doesn't have a standard INPUT_PULLDOWN define for all boards.
+            // May require board-specific code or return unsupported.
+             pinMode(_pin_index, INPUT_PULLDOWN); // ESP32 specific potentially
+            // return base::error_t(base::status::unsupported);
+            break;
+        case flexhal::hal::gpio::PinMode::Output:
+            pinMode(_pin_index, OUTPUT);
+            break;
+        case flexhal::hal::gpio::PinMode::OutputOpenDrain:
+             pinMode(_pin_index, OUTPUT_OPEN_DRAIN); // ESP32 specific potentially
+            // Requires board-specific handling, might not be universally available.
+            // return base::error_t(base::status::unsupported);
+            break;
+        // Handle other modes like Analog, Pwm if necessary, or return unsupported
+        default:
+            return base::error_t(base::status::unsupported);
     }
-
-    // Handle Analog type - often no specific pinMode needed, but depends on platform ADC/DAC setup.
-    // If signal_type is Analog, we might skip pinMode or use a specific one.
-    if (config.signal_type == flexhal::hal::gpio::PinSignalType::Analog) {
-       // For basic analogRead on many Arduinos, no pinMode is strictly needed.
-       // For ESP32, pinMode(pin, ANALOG) exists but isn't always required.
-       // Let's assume no action needed for now, can refine later.
-       mode_set = true; // Consider it handled
-    }
-     // Handle Pwm type - typically needs OUTPUT mode set first, handled by analogWrite usually.
-    if (config.signal_type == flexhal::hal::gpio::PinSignalType::Pwm) {
-        arduino_mode = OUTPUT; // PWM usually requires OUTPUT mode
-        mode_set = true;
-    }
-
-    if (mode_set) {
-        // Check if pin ID is valid for Arduino (simple cast for now)
-        // Might need more robust checking based on board limits (NUM_DIGITAL_PINS)
-        pinMode(static_cast<uint8_t>(_pin_id), arduino_mode);
-        _current_config = config; // Store the applied config
-        return base::to_error(base::status::ok);
-    } else {
-        // Configuration combination not supported or invalid
-        // Should PinMode::Disabled be handled explicitly?
-        return base::to_error(base::status::unsupported); // Or param error?
-    }
+    return base::error_t(base::status::ok); // Return OK on success
 }
 
-base::error_t ArduinoPin::digitalWrite(flexhal::hal::gpio::DigitalValue value)
-{
-    // Map FlexHAL DigitalValue to Arduino HIGH/LOW
-    uint8_t arduino_value = (value == flexhal::hal::gpio::DigitalValue::High) ? HIGH : LOW;
-    ::digitalWrite(static_cast<uint8_t>(_pin_id), arduino_value);
-        return base::to_error(base::status::ok);
+// Implementation for setConfig (Required by IPin)
+inline base::error_t ArduinoPin::setConfig(const flexhal::hal::gpio::PinConfig& config) {
+    // Arduino typically handles configuration via pinMode.
+    // A more complex mapping could be done here if needed,
+    // translating PinConfig to appropriate pinMode calls.
+    // For now, mark as unsupported as setMode is preferred.
+    (void)config; // Mark config as unused for now
+    return base::error_t(base::status::unsupported); // Return unsupported
 }
 
-flexhal::hal::gpio::DigitalValue ArduinoPin::digitalRead()
-{
-    int arduino_value = ::digitalRead(static_cast<uint8_t>(_pin_id));
-    // Map Arduino HIGH/LOW back to FlexHAL DigitalValue
-    return (arduino_value == HIGH) ? flexhal::hal::gpio::DigitalValue::High : flexhal::hal::gpio::DigitalValue::Low;
+inline base::error_t ArduinoPin::digitalWrite(bool level) {
+    ::digitalWrite(_pin_index, level ? HIGH : LOW); // Use global namespace ::digitalWrite
+    return base::error_t(base::status::ok); // Assume success
 }
 
-base::error_t ArduinoPin::analogWrite(int value)
-{
-    ::analogWrite(static_cast<uint8_t>(_pin_id), value);
-    return base::to_error(base::status::ok);
+inline int ArduinoPin::digitalRead() const {
+    return ::digitalRead(_pin_index); // Use global namespace ::digitalRead. Returns HIGH (1) or LOW (0).
 }
 
-int ArduinoPin::analogRead()
-{
-    return ::analogRead(static_cast<uint8_t>(_pin_id));
+inline base::error_t ArduinoPin::analogWrite(uint32_t value) {
+    // Arduino analogWrite usually takes an int (0-255 for PWM).
+    // Need to consider the range of value (uint32_t) and map/clamp it.
+    // Also, check if the pin supports PWM/DAC on the target Arduino board.
+    // For simplicity, casting for now. May need proper range mapping.
+#if defined(ESP32) // ESP32 ledc functions might be better
+    // ledcAttachPin(_pin_index, pwmChannel); // Setup PWM channel if not done
+    // ledcWrite(_pin_index, value); // Use appropriate PWM function
+    ::analogWrite(_pin_index, static_cast<int>(value)); // Use standard Arduino for now
+#else
+    ::analogWrite(_pin_index, static_cast<int>(value)); // Standard Arduino analogWrite
+#endif
+    return base::error_t(base::status::ok); // Assume success, though pin capability check is needed
 }
+
+inline int ArduinoPin::analogRead() const {
+    return ::analogRead(_pin_index); // Use global namespace ::analogRead
+}
+
+// --- End IPin Implementation ---
+
 
 } // namespace gpio
 } // namespace hal
@@ -164,6 +170,5 @@ int ArduinoPin::analogRead()
 } // namespace internal
 } // namespace flexhal
 
+#endif // FLEXHAL_INTERNAL_FRAMEWORK_ARDUINO_HAL_GPIO_ARDUINOPIN_IPP
 #endif // FLEXHAL_INTERNAL_IMPLEMENTATION
-
-#endif // FLEXHAL_DETECT_INTERNAL_FRAMEWORK_ARDUINO

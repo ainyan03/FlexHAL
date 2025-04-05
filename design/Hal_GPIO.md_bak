@@ -1,0 +1,88 @@
+# GPIO機能
+
+## 機能要件
+
+### 基本要件
+- GPIOを制御する
+- 実装部は、複数提供する。例としてESP32-S3の場合は以下のような実装を利用可能にする
+  - Arduino依存実装は、`flexhal::internal::framework::arduino::hal::gpio`
+  - ESP-IDF依存実装は、`flexhal::internal::framework::espidf::hal::gpio`
+  - プラットフォーム依存実装は、`flexhal::internal::platform::esp32::esp32s3::hal::gpio`
+  - フォールバック実装は、`flexhal::fallback::hal::gpio`
+- 公開APIは大別すると2通りの方法で提供される。
+  - 抽象化されない関数型API (低オーバーヘッド・抽象化なし・低安全性)
+  - 抽象化されたインターフェイスのメソッドAPI (高オーバーヘッド・高抽象化・高安全性)
+- 抽象化されたインターフェイスは 2種類提供される。
+  - IGpioインターフェイス :複数のピンを持つペリフェラルを表現する型を抽象化する
+  - IPinインターフェイス : 1つのピンを表現する型を抽象化する
+- ピン番号を表現する型として、`flexhal::hal::gpio::pin_id_t` を提供する。
+
+### 関数型API
+- 関数型APIとして、ピン設定、デジタル入出力、アナログ入出力などの関数を提供する。
+- 関数型APIは、主に環境依存階層の実装内部や、速度が最優先される場面での使用を想定する。
+- **ピン番号引数:** プラットフォーム固有のピン番号を表す数値型 (例: `uint8_t`) を直接受け取る。
+  - 例: `error_t digital_write(uint8_t native_pin, bool level)`
+- **安全性:** ピン番号の妥当性チェックなどは行わないため、使用者は正しいピン番号を指定する責務を負う。ヘルパー関数による変換支援はない。
+- 関数型APIは、環境依存階層ごとに提供する。
+- 異なる環境向けの実装それぞれの使用感が同じになるように、関数の命名や引数などは、同一になるようにする。
+  - 例:関数 hal::gpio::digital_write を提供する場合、ESP32-S3環境では以下の配置にも同じ関数シグネチャで実装が用意される。
+    - flexhal::internal::framework::arduino::hal::gpio::digital_write
+    - flexhal::internal::framework::espidf::hal::gpio::digital_write
+    - flexhal::internal::platform::esp32::esp32s3::hal::gpio::digital_write
+    - flexhal::fallback::hal::gpio::digital_write
+- 関数型APIは、環境依存のない階層 flexhal::hal::gpio としても提供する。
+  - flexhal::hal::gpio は、環境依存APIの別名(using namespace など？)として提供する。
+  - ビルド環境ごとに最適な実装が選択されるようにマクロを構築する。
+  - つまりプラットフォーム依存のgpio APIがある場合はそれが利用され、無ければフレームワーク依存、それも無ければフォールバック実装が利用される。
+  - これにより、抽象化オーバーヘッドが最小限の関数APIが用意される。
+- 関数型APIは基本的に速度優先とし、エラーハンドリングや安全対策を考慮しない。範囲外のピンを操作指示した場合の挙動は未定義とする。
+- 割込処理用のAPIは、関数型APIでは今のところ提供しない。 (将来的に提供する可能性あり)
+- ピン番号の引数型は、プラットフォーム非依存の通し番号を表す `pin_id_t` 型を想定する。(例: `void digital_write(pin_id_t pin, bool level)`)
+
+### IGpioインターフェイス
+- 複数のピンを持つGPIOペリフェラル (マイコン内蔵GPIO、GPIOエキスパンダなど) を抽象化するインターフェイスクラス `flexhal::hal::gpio::IGpio` を提供する。
+- 環境依存階層でこのインターフェイスを継承し、具体的な実装を提供する。
+- メソッドは可能な限り `flexhal::base::error_t` を返却し、エラーハンドリングを行う。
+- `digitalRead`, `analogRead` は戻り値として読み取り値を返す必要があるため、エラー時はマイナス値を返すことでエラーを示す。
+- **ピン番号引数:** プラットフォーム非依存のピン識別子を表す `flexhal::hal::gpio::PinId` 構造体を受け取る。
+  - 例: `error_t digitalWrite(PinId pin, bool level)`
+- **安全性:** 不正な `PinId` が渡された場合のチェックなどを実装内部で行うことが期待される。
+- **ヘルパー:** プラットフォーム固有のピン名や番号から `PinId` を生成するためのヘルパー機能 (例: `PinId::fromNative`, `PinId::fromArduino`) を `PinId` 構造体自身や、関連する場所で提供する想定。(詳細は別途検討)
+- 割込処理用のメソッドを提供する。（将来構想: `attachInterrupt(PinId pin, ...)`）
+- 単独のピンを表す `IPin` インターフェイスを取得する `getPin(PinId pin)` メソッドを提供する。
+- アナログ系の操作は、対象環境のハードウェアが対応していない場合の動作は実装部の裁量に任される (エラーを返す or 仮想的に動作させる)。
+
+### IPinインターフェイス
+- 単独のピンを表す抽象化インターフェイスとして、`flexhal::hal::gpio::IPin` インターフェイスクラスを提供する。
+- `IGpio::getPin()` メソッドを通じて取得する。
+- 所属する `IGpio` への参照(またはポインタ)と、自身の `PinId` を持つ。
+- 基本実装として、所属する `IGpio` の対応するメソッドを呼び出すラッパーメソッドを提供する。
+  - 例: `error_t IPin::digitalWrite(bool level) { return _gpio->digitalWrite(_pin, level); }`
+- **ピン番号引数:** メソッド自体はピン番号引数を取らない (自身が特定のピンを表すため)。
+
+### PinId 構造体とピン番号の扱い
+- **インターフェースAPI (`IGpio`, `IPin`) でのピン識別:** プラットフォーム非依存のピン識別子として `flexhal::hal::gpio::PinId` 構造体を使用する。
+  - この構造体は、内部的にピン番号や所属するGPIOペリフェラル等の情報を保持する想定 (具体的な内部構造は別途検討)。
+  - 異なるGPIOペリフェラル (例: 内蔵GPIOとI2Cエキスパンダ) のピンを区別できるような情報も持たせられる可能性がある。
+- **`PinId` の生成:** プラットフォーム固有の表現 (例: `PA0`, `D13`, ネイティブなピン番号) から `PinId` インスタンスを生成するための仕組みを提供する。
+  - `PinId` 自身のコンストラクタや静的ファクトリメソッド (例: `PinId::fromNative(13)`, `PinId::fromPortPin('A', 0)`) での提供を想定。
+- **関数型APIでのピン識別:** プラットフォーム固有のピン番号を表す単純な数値型 (例: `uint8_t`) を直接使用する。
+  - ユーザーは、使用するプラットフォームのピン番号体系を理解し、正しい値を指定する必要がある。
+
+### 提供するAPI
+
+- デジタル出力: 関数型 = `digital_write(uint8_t pin, ...)` / `IGpio::digitalWrite(PinId pin, ...)` / `IPin::digitalWrite(...)`
+- デジタル入力: 関数型 = `digital_read(uint8_t pin)` / `IGpio::digitalRead(PinId pin)` / `IPin::digitalRead()`
+- アナログ出力: 関数型 = `analog_write(uint8_t pin, ...)` / `IGpio::analogWrite(PinId pin, ...)` / `IPin::analogWrite(...)`
+- アナログ入力: 関数型 = `analog_read(uint8_t pin)` / `IGpio::analogRead(PinId pin)` / `IPin::analogRead()`
+- 簡易設定: 関数型 = `set_mode(uint8_t pin, ...)` / `IGpio::setMode(PinId pin, ...)` / `IPin::setMode(...)`
+- 詳細設定: 関数型 = `set_config(uint8_t pin, ...)` / `IGpio::setConfig(PinId pin, ...)` / `IPin::setConfig(...)`
+- ... 以下未整理
+
+### set_config関数
+ 設定用の構造体を受ける方式とする。
+ ピン設定を詳細に制御するためのPinConfig構造体を提供する。
+
+### set_mode関数
+ 単純な enum の引数一つで設定できる方式とする。
+ 内部的には PinConfig 構造体に変換して set_config を呼び出す。
