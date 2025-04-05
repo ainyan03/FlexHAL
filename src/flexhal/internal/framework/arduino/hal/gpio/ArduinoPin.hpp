@@ -30,17 +30,17 @@ public:
     uint32_t getPinIndex() const override;
 
     // Configure pin mode (Input, Output, Pullups, etc.) using PinMode enum
-    base::error_t setMode(flexhal::hal::gpio::PinMode mode) override;
+    flexhal::base::status setMode(flexhal::hal::gpio::PinMode mode) override;
 
     // Configure pin using the detailed PinConfig struct (IPin requires this)
-    base::error_t setConfig(const flexhal::hal::gpio::PinConfig& config) override;
+    flexhal::base::status setConfig(const flexhal::hal::gpio::PinConfig& config) override;
 
     // Digital I/O
-    base::error_t digitalWrite(bool level) override; // Updated parameter to bool
+    flexhal::base::status digitalWrite(bool level) override; // Updated parameter to bool
     int digitalRead() const override;             // Updated return type to int
 
     // Analog I/O (PWM/DAC/ADC) - Keep existing signatures if they match IPin
-    base::error_t analogWrite(uint32_t value) override; // Keep uint32_t if IPin uses it
+    flexhal::base::status analogWrite(uint32_t value) override; // Keep uint32_t if IPin uses it
     int analogRead() const override;                  // Keep int if IPin uses it
 
     // --- End IPin Interface ---
@@ -92,7 +92,7 @@ inline uint32_t ArduinoPin::getPinIndex() const {
     return _pin_index; // Return the stored pin index
 }
 
-inline base::error_t ArduinoPin::setMode(flexhal::hal::gpio::PinMode mode) {
+inline flexhal::base::status ArduinoPin::setMode(flexhal::hal::gpio::PinMode mode) {
     // Map FlexHAL PinMode to Arduino pinMode() arguments
     switch (mode) {
         case flexhal::hal::gpio::PinMode::Input:
@@ -104,56 +104,72 @@ inline base::error_t ArduinoPin::setMode(flexhal::hal::gpio::PinMode mode) {
         case flexhal::hal::gpio::PinMode::InputPulldown:
             // Arduino doesn't have a standard INPUT_PULLDOWN define for all boards.
             // May require board-specific code or return unsupported.
-             pinMode(_pin_index, INPUT_PULLDOWN); // ESP32 specific potentially
-            // return base::error_t(base::status::unsupported);
+             pinMode(_pin_index, INPUT); // Default to INPUT
+            // return flexhal::base::status::unsupported;
             break;
         case flexhal::hal::gpio::PinMode::Output:
             pinMode(_pin_index, OUTPUT);
             break;
         case flexhal::hal::gpio::PinMode::OutputOpenDrain:
-             pinMode(_pin_index, OUTPUT_OPEN_DRAIN); // ESP32 specific potentially
+             pinMode(_pin_index, OUTPUT); // Default to OUTPUT
             // Requires board-specific handling, might not be universally available.
-            // return base::error_t(base::status::unsupported);
+            // return flexhal::base::status::unsupported;
             break;
         // Handle other modes like Analog, Pwm if necessary, or return unsupported
         default:
-            return base::error_t(base::status::unsupported);
+            return flexhal::base::status::unsupported;
     }
-    return base::error_t(base::status::ok); // Return OK on success
+    return flexhal::base::status::ok; // Return OK on success
 }
 
-// Implementation for setConfig (Required by IPin)
-inline base::error_t ArduinoPin::setConfig(const flexhal::hal::gpio::PinConfig& config) {
-    // Arduino typically handles configuration via pinMode.
-    // A more complex mapping could be done here if needed,
-    // translating PinConfig to appropriate pinMode calls.
-    // For now, mark as unsupported as setMode is preferred.
-    (void)config; // Mark config as unused for now
-    return base::error_t(base::status::unsupported); // Return unsupported
+// Implementation for setConfig (handles pull modes)
+inline flexhal::base::status ArduinoPin::setConfig(const flexhal::hal::gpio::PinConfig& config) {
+    // Based on the pull mode, call the appropriate pinMode()
+    // Note: This assumes the pin is intended to be used as an input when pulls are active.
+    switch (config.pull) {
+        case flexhal::hal::gpio::PinPull::Up:
+            pinMode(_pin_index, INPUT_PULLUP);
+            return flexhal::base::status::ok;
+
+        case flexhal::hal::gpio::PinPull::Down:
+#if defined(INPUT_PULLDOWN) // Check if the Arduino core defines INPUT_PULLDOWN
+            pinMode(_pin_index, INPUT_PULLDOWN);
+            return flexhal::base::status::ok;
+#else
+            // This Arduino core doesn't define INPUT_PULLDOWN, so unsupported.
+            return flexhal::base::status::unsupported;
+#endif
+
+        case flexhal::hal::gpio::PinPull::None:
+            // Setting pull to None. If the pin is an input, set it to plain INPUT.
+            // If it's an output, this call might not have a direct effect on pull state,
+            // but calling pinMode(INPUT) is the standard way to disable pulls.
+            // We might need getMode() to be smarter here, but let's default to INPUT.
+            pinMode(_pin_index, INPUT); 
+            return flexhal::base::status::ok;
+
+        default:
+            // Unknown pull mode setting
+            return flexhal::base::status::unsupported;
+    }
 }
 
-inline base::error_t ArduinoPin::digitalWrite(bool level) {
+inline flexhal::base::status ArduinoPin::digitalWrite(bool level) {
     ::digitalWrite(_pin_index, level ? HIGH : LOW); // Use global namespace ::digitalWrite
-    return base::error_t(base::status::ok); // Assume success
+    return flexhal::base::status::ok; // Assume success
 }
 
 inline int ArduinoPin::digitalRead() const {
     return ::digitalRead(_pin_index); // Use global namespace ::digitalRead. Returns HIGH (1) or LOW (0).
 }
 
-inline base::error_t ArduinoPin::analogWrite(uint32_t value) {
+inline flexhal::base::status ArduinoPin::analogWrite(uint32_t value) {
     // Arduino analogWrite usually takes an int (0-255 for PWM).
     // Need to consider the range of value (uint32_t) and map/clamp it.
     // Also, check if the pin supports PWM/DAC on the target Arduino board.
     // For simplicity, casting for now. May need proper range mapping.
-#if defined(ESP32) // ESP32 ledc functions might be better
-    // ledcAttachPin(_pin_index, pwmChannel); // Setup PWM channel if not done
-    // ledcWrite(_pin_index, value); // Use appropriate PWM function
-    ::analogWrite(_pin_index, static_cast<int>(value)); // Use standard Arduino for now
-#else
     ::analogWrite(_pin_index, static_cast<int>(value)); // Standard Arduino analogWrite
-#endif
-    return base::error_t(base::status::ok); // Assume success, though pin capability check is needed
+    return flexhal::base::status::ok; // Assume success, though pin capability check is needed
 }
 
 inline int ArduinoPin::analogRead() const {

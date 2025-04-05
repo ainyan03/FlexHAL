@@ -48,7 +48,7 @@ public:
      * @param value The value to write to the port.
      * @return flexhal::base::status::Ok on success, or an error code.
      */
-    virtual base::error_t write(uint32_t value) = 0; // Data size fixed to uint32_t for now?
+    virtual base::status write(uint32_t value) = 0; // Data size fixed to uint32_t for now?
 
     /**
      * @brief Reads the current state of the entire port.

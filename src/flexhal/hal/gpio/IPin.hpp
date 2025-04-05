@@ -41,17 +41,17 @@ public:
     /**
      * @brief Sets the basic mode of the pin (Input, Output, etc.).
      * @param mode The desired pin mode.
-     * @return base::error_t OK on success, or an error code.
+     * @return flexhal::base::status indicating success or failure (e.g., unsupported mode).
      */
-    virtual base::error_t setMode(PinMode mode) = 0;
+    virtual base::status setMode(PinMode mode) = 0;
 
     /**
      * @brief Applies detailed configuration to the pin.
      * Allows setting speed, pull-up/down, open-drain, etc.
      * @param config The pin configuration structure.
-     * @return base::error_t OK on success, or an error code.
+     * @return flexhal::base::status indicating success or failure.
      */
-    virtual base::error_t setConfig(const PinConfig& config) = 0;
+    virtual base::status setConfig(const PinConfig& config) = 0;
 
     // Optional config getters (can be added later)
     // virtual PinMode getMode() const = 0;
@@ -63,10 +63,10 @@ public:
     /**
      * @brief Write a digital value to the pin.
      * The pin should be configured as an output.
-     * @param level The digital level to write (true for HIGH, false for LOW).
-     * @return base::error_t OK on success, or an error code.
+     * @param level true for HIGH, false for LOW.
+     * @return flexhal::base::status indicating success or failure.
      */
-    virtual base::error_t digitalWrite(bool level) = 0; // Changed parameter to bool
+    virtual base::status digitalWrite(bool level) = 0; // Changed parameter to bool
 
     /**
      * @brief Read the digital value of the pin.
@@ -82,11 +82,11 @@ public:
      * @brief Write an analog value (e.g., PWM duty cycle) to the pin.
      * Behavior depends on hardware capabilities (PWM, DAC).
      * @param value The analog value to write. Range is platform-dependent.
-     * @return base::error_t OK on success, status::unsupported if unavailable, or other error code.
+     * @return flexhal::base::status indicating success or failure (e.g., pin doesn't support analog output).
      */
-    virtual base::error_t analogWrite(uint32_t value) { // Changed parameter to uint32_t
+    virtual base::status analogWrite(uint32_t value) { // Changed parameter to uint32_t
         // Default implementation returns not_supported
-        return base::error_t(base::status::unsupported); // Use correct status code
+        return base::status::unsupported; // Use correct status code
     }
 
     /**

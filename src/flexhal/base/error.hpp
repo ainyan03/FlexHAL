@@ -9,7 +9,7 @@ namespace flexhal {
 namespace base {
 
 // エラーコードの基本型定義
-using error_t = int16_t;
+// using error_t = int16_t; // No longer the primary return type, use status enum directly.
 
 // エラーコードの構造:
 // int16_t の符号ビットを利用して、負の値はエラー、0以上は正常を表す
@@ -35,22 +35,22 @@ enum class status : int16_t {
 };
 
 // キャストヘルパー
-constexpr error_t to_error(status s) {
-  return static_cast<error_t>(s);
+constexpr int16_t to_error(status s) {
+  return static_cast<int16_t>(s);
 }
 
 // エラー判定関数
-FLEXHAL_INTERNAL_NODISCARD constexpr bool is_error(error_t err) {
+FLEXHAL_INTERNAL_NODISCARD constexpr bool is_error(int16_t err) {
   return err < 0;
 }
 
-FLEXHAL_INTERNAL_NODISCARD constexpr bool is_ok(error_t err) {
+FLEXHAL_INTERNAL_NODISCARD constexpr bool is_ok(int16_t err) {
   return err >= 0;
 }
 
 // 型チェック
-static_assert(sizeof(error_t) == 2, "error_t must be 16-bit");
-static_assert(std::numeric_limits<error_t>::is_signed, "error_t must be signed");
+static_assert(sizeof(int16_t) == 2, "error_t must be 16-bit");
+static_assert(std::numeric_limits<int16_t>::is_signed, "error_t must be signed");
 
 } // namespace base
 } // namespace flexhal

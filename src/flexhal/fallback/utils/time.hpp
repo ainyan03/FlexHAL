@@ -14,14 +14,14 @@ namespace fallback {
 namespace utils {
 namespace time {
 
-  inline base::error_t delay_ms(uint32_t ms) {
+  inline base::status delay_ms(uint32_t ms) {
     std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-    return to_error(base::status::ok);
+    return base::status::ok;
   }
 
-  inline base::error_t delay_us(uint32_t us) {
+  inline base::status delay_us(uint32_t us) {
     std::this_thread::sleep_for(std::chrono::microseconds(us));
-    return to_error(base::status::ok);
+    return base::status::ok;
   }
 
   inline uint32_t millis() {
@@ -43,4 +43,3 @@ namespace time {
 } // namespace utils
 } // namespace fallback
 } // namespace flexhal
-

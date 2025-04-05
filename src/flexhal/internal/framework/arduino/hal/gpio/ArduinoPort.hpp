@@ -49,7 +49,7 @@ public:
     // Port-level operations (optional, default implementations in IPort return unsupported)
     // base::error_t writePort(uint32_t value, uint32_t mask = 0xFFFFFFFF) override; // Use write() instead
     // uint32_t readPort(uint32_t mask = 0xFFFFFFFF) const override; // Use read() instead
-    base::error_t write(uint32_t value) override; // Implement required write
+    base::status write(uint32_t value) override; // Implement required write
     uint32_t read() const override;               // Implement required read
     // base::error_t setMode(flexhal::hal::gpio::PinMode mode, uint32_t mask = 0xFFFFFFFF) override;
     // base::error_t setConfig(const flexhal::hal::gpio::PinConfig& config, uint32_t mask = 0xFFFFFFFF) override;
@@ -185,9 +185,9 @@ inline const flexhal::hal::gpio::IPin& ArduinoPort::getPin(uint32_t pin_index) c
 }
 
 // Implement write and read as unsupported for Arduino port-level access
-inline base::error_t ArduinoPort::write(uint32_t value) {
+inline base::status ArduinoPort::write(uint32_t value) {
     (void)value; // Mark unused
-    return base::error_t(base::status::unsupported); // Port write not supported
+    return flexhal::base::status::unsupported; // Port write not supported
 }
 
 inline uint32_t ArduinoPort::read() const {

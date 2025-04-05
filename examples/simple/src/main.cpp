@@ -1,8 +1,8 @@
 #include <FlexHAL.h> // Just include the header
 
 // テスト用の関数
-flexhal::base::error_t test_error() {
-  return flexhal::base::to_error(flexhal::base::status::ok);
+flexhal::base::status test_error() {
+  return flexhal::base::status::ok;
 }
 
 // Empty setup function (required by Arduino framework)
